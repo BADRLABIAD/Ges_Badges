@@ -51,6 +51,26 @@ FAMILLE_METIER_MAP = {
 STOPWORDS = {"de", "du", "des", "la", "le", "les", "en", "et", "à", "au", "aux",
              "d", "l", "un", "une", "pour", "sur", "dans"}
 
+POSTE_MAXLEN = 12
+CODE_COMPETENCE_MAXLEN = 8
+
+# Real varchar limits from INFORMATION_SCHEMA.COLUMNS (SQL Server)
+COL_LIMITS = {
+    "INTITULE": 90,
+    "INTITULE_COMPLET": 150,
+    "OBSERVATIONS": 550,       # Finalité du poste
+    "DIMENSION": 250,
+    "INTER_INTERNE": 250,
+    "INTER_EXTERNE": 250,
+    "MANAGEMENT_DIRECTE": 250,
+    "Management_indi": 250,
+    "Expérience_globale": 250,
+    "Expérience_spéci": 250,
+    "Filière_Evolution": 250,
+    "MOYENS_PREVUS": 250,
+    "RESULTAT_ATTENDU": 250,
+}
+
 
 def strip_accents(s):
     s = unicodedata.normalize("NFKD", s)
@@ -90,6 +110,39 @@ def normalize_existing_code(code):
     code = strip_accents(str(code)).upper()
     code = re.sub(r"[^A-Z0-9]+", "_", code).strip("_")
     return code
+
+
+def finalize_code(candidate, used_codes, maxlen):
+    """Truncate to maxlen and disambiguate against used_codes, keeping length <= maxlen."""
+    candidate = (candidate or "POSTE")[:maxlen]
+    if candidate not in used_codes:
+        used_codes.add(candidate)
+        return candidate
+    base = candidate
+    n = 2
+    while True:
+        suffix = str(n)
+        cut = maxlen - len(suffix)
+        cand = f"{base[:cut]}{suffix}"
+        if cand not in used_codes:
+            used_codes.add(cand)
+            return cand
+        n += 1
+
+
+def truncate_field(value, colname, context, truncation_log):
+    if value is None:
+        return None
+    limit = COL_LIMITS.get(colname)
+    if limit is None:
+        return value
+    s = str(value)
+    if len(s) <= limit:
+        return s
+    cut = s[:limit - 3].rsplit(" ", 1)[0] if " " in s[:limit - 3] else s[:limit - 3]
+    cut = cut.rstrip() + "..."
+    truncation_log.append((context, colname, len(s), limit, s))
+    return cut
 
 
 def sql_str(v):
@@ -164,16 +217,24 @@ def main():
             continue
         code, intitule, typ, definition = parts[0].strip(), parts[1].strip(), parts[2].strip(), parts[3].strip()
         csv_rows.append((code, intitule, typ, definition))
-    missing_comp = [r for r in csv_rows if r[0] not in existing_codes]
-    for code, intitule, typ, definition in missing_comp:
+    missing_comp_raw = [r for r in csv_rows if r[0] not in existing_codes]
+    # NB: suppose que sql/alter_code_competence.sql a ete execute au prealable
+    # (CODE_COMPETENCE.CODE_COMPETENCE et POSTE_CRITERES.CODE_COMPETENCE elargis
+    # a varchar(20)) -- on garde donc les codes originaux du CSV tels quels.
+    missing_comp = []  # (final_code, intitule, typ, definition, original_code)
+    for code, intitule, typ, definition in missing_comp_raw:
+        if len(code) > CODE_COMPETENCE_MAXLEN:
+            assert len(code) <= 20, f"code {code} depasse aussi varchar(20)"
+        missing_comp.append((code, intitule, typ, definition, code))
         existing_intitules.add(intitule)
         existing_intitules_norm.add(norm_match(intitule))
 
-    used_codes = set(existing_codes)
+    used_codes = {"ACH_OPEX"}  # POSTE codes namespace (separate from CODE_COMPETENCE); only known existing POSTE
     assigned = []  # (fiche, poste_code, source_of_code)
     unmapped_metier = []
     unmapped_niveau = []
     unmatched_competences = []  # (title, comp_label)
+    truncation_log = []  # (context, colname, original_len, limit, original_text)
 
     for f in fiches:
         title = f["Intitulé du poste"] or ""
@@ -184,19 +245,14 @@ def main():
             poste_code = KNOWN_DB_POSTE_OVERRIDE[key]
             source = "existant en base (ACH_OPEX)"
         elif f.get("Code poste"):
-            poste_code = normalize_existing_code(f["Code poste"])
-            source = "Code poste source"
+            candidate = normalize_existing_code(f["Code poste"])
+            poste_code = finalize_code(candidate, used_codes, POSTE_MAXLEN)
+            source = "Code poste source" if poste_code == candidate else "Code poste source (tronqué)"
         else:
             abbr = DIRECTION_ABBR.get(direction, "GEN")
-            poste_code = f"{abbr}_{slugify_title(title)}"
+            candidate = f"{abbr}_{slugify_title(title, max_len=POSTE_MAXLEN - len(abbr) - 1)}"
+            poste_code = finalize_code(candidate, used_codes, POSTE_MAXLEN)
             source = "généré (direction + intitulé)"
-
-        base_code = poste_code
-        n = 2
-        while poste_code in used_codes and key not in KNOWN_DB_POSTE_OVERRIDE:
-            poste_code = f"{base_code}_{n}"
-            n += 1
-        used_codes.add(poste_code)
 
         metier_code = FAMILLE_METIER_MAP.get(direction)
         if not metier_code:
@@ -266,10 +322,11 @@ def main():
     rws4.column_dimensions["C"].width = 35
 
     rws5 = rwb.create_sheet("CODE_COMPETENCE manquants")
-    rws5.append(["Code", "Intitulé", "Type", "Définition"])
-    for r in missing_comp:
-        rws5.append(list(r))
-    rws5.column_dimensions["A"].width = 16
+    rws5.append(["Code (nécessite ALTER varchar(20), cf sql/alter_code_competence.sql)",
+                  "Intitulé", "Type", "Définition"])
+    for final_code, intitule, typ, definition, orig_code in missing_comp:
+        rws5.append([final_code, intitule, typ, definition])
+    rws5.column_dimensions["A"].width = 20
     rws5.column_dimensions["B"].width = 45
     rws5.column_dimensions["D"].width = 70
 
@@ -282,7 +339,7 @@ def main():
     rws6.column_dimensions["B"].width = 55
     rws6.column_dimensions["C"].width = 40
 
-    rwb.save(OUT_REVIEW)
+    # (rwb.save happens at the end of main(), once troncature_log is fully populated)
 
     # ---------------------------------------------------------------
     # SQL script
@@ -298,20 +355,25 @@ def main():
     lines.append("SET XACT_ABORT ON;")
     lines.append("BEGIN TRANSACTION;")
     lines.append("")
+    lines.append("-- ID_OBJECTIF n'est pas IDENTITY (type float) -> on le calcule nous-memes.")
+    lines.append("-- A VERIFIER: si l'application a sa propre logique d'attribution, ajuster ici.")
+    lines.append("DECLARE @next_obj_id float = (SELECT ISNULL(MAX(ID_OBJECTIF), 0) + 1 FROM dbo.POSTE_OBJECTIFS);")
+    lines.append("")
 
     # 1) CODE_COMPETENCE -- only the codes missing from the referential
     lines.append("-- ---------------------------------------------------------------------")
     lines.append(f"-- 1) CODE_COMPETENCE : {len(missing_comp)} competences du referentiel absentes de la table")
     lines.append("-- ---------------------------------------------------------------------")
-    for code, intitule, typ, definition in missing_comp:
-        nature = typ if typ.strip().lstrip("-").isdigit() else "NULL"
+    for code, intitule, typ, definition, orig_code in missing_comp:
+        nature = sql_str(typ.strip()) if typ.strip().lstrip("-").isdigit() else "NULL"
+        intitule_c = truncate_field(intitule, "INTITULE", f"CODE_COMPETENCE {code}", truncation_log)
+        note = f" -- code original CSV: {orig_code}" if orig_code != code else ""
         lines.append(
-            "IF NOT EXISTS (SELECT 1 FROM dbo.CODE_COMPETENCE WHERE CODE_COMPETENCE = "
-            f"{sql_str(code)})\n"
+            f"IF NOT EXISTS (SELECT 1 FROM dbo.CODE_COMPETENCE WHERE CODE_COMPETENCE = {sql_str(code)}){note}\n"
             "BEGIN\n"
             "    INSERT INTO dbo.CODE_COMPETENCE (CODE_COMPETENCE, INTITULE, NATURE_COMPETENCE, DESCRIPTION, "
             "CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE)\n"
-            f"    VALUES ({sql_str(code)}, {sql_str(intitule)}, {nature}, {sql_str(definition)}, "
+            f"    VALUES ({sql_str(code)}, {sql_str(intitule_c)}, {nature}, {sql_str(definition)}, "
             f"{sql_str(CREATED_BY)}, {sql_str(CREATED_BY)}, GETDATE(), GETDATE());\n"
             "END;"
         )
@@ -330,21 +392,23 @@ def main():
             continue
         n_inserted += 1
 
-        intitule = f["Intitulé du poste"]
-        finalite = f.get("Finalité du poste")
-        dimension = f.get("Dimension & enjeux")
+        ctx = f"{poste} / {f['Intitulé du poste']}"
+        intitule = truncate_field(f["Intitulé du poste"], "INTITULE", ctx, truncation_log)
+        intitule_complet = truncate_field(f["Intitulé du poste"], "INTITULE_COMPLET", ctx, truncation_log)
+        finalite = truncate_field(f.get("Finalité du poste"), "OBSERVATIONS", ctx, truncation_log)
+        dimension = truncate_field(f.get("Dimension & enjeux"), "DIMENSION", ctx, truncation_log)
         missions_html = missions_to_html(f.get("Missions principales"))
         metier = a["metier_code"]
         niveau = a["niveau_code"]
         teletravail = "NULL"
         psh = "NULL"
-        inter_interne = f.get("Interlocuteurs internes")
-        inter_externe = f.get("Interlocuteurs externes")
-        sup_directe = f.get("Supervision directe (effectif)")
-        sup_indirecte = f.get("Supervision indirecte (effectif)")
-        exp_globale = f.get("Expérience globale")
-        exp_specifique = f.get("Expérience spécifique")
-        filiere_evol = f.get("Filière(s) d'évolution")
+        inter_interne = truncate_field(f.get("Interlocuteurs internes"), "INTER_INTERNE", ctx, truncation_log)
+        inter_externe = truncate_field(f.get("Interlocuteurs externes"), "INTER_EXTERNE", ctx, truncation_log)
+        sup_directe = truncate_field(f.get("Supervision directe (effectif)"), "MANAGEMENT_DIRECTE", ctx, truncation_log)
+        sup_indirecte = truncate_field(f.get("Supervision indirecte (effectif)"), "Management_indi", ctx, truncation_log)
+        exp_globale = truncate_field(f.get("Expérience globale"), "Expérience_globale", ctx, truncation_log)
+        exp_specifique = truncate_field(f.get("Expérience spécifique"), "Expérience_spéci", ctx, truncation_log)
+        filiere_evol = truncate_field(f.get("Filière(s) d'évolution"), "Filière_Evolution", ctx, truncation_log)
 
         lines.append(f"-- ---- POSTE {poste} : {intitule} ----")
         lines.append(f"IF NOT EXISTS (SELECT 1 FROM dbo.POSTE_DEFINITION WHERE POSTE = {sql_str(poste)})")
@@ -356,7 +420,7 @@ def main():
             "FERMETURE, DT_CREATION, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE)"
         )
         lines.append(
-            f"    VALUES ({sql_str(poste)}, {sql_str(intitule)}, {sql_str(intitule)}, {sql_str(finalite)}, "
+            f"    VALUES ({sql_str(poste)}, {sql_str(intitule)}, {sql_str(intitule_complet)}, {sql_str(finalite)}, "
             f"{sql_str(dimension)}, {sql_str(missions_html)}, {sql_str(metier)}, {sql_str(niveau)}, "
             f"{teletravail}, {psh}, {sql_str(inter_interne)}, {sql_str(inter_externe)}, "
             f"{sql_str(sup_directe)}, {sql_str(sup_indirecte)}, {sql_str(exp_globale)}, {sql_str(exp_specifique)}, "
@@ -368,20 +432,22 @@ def main():
         # POSTE_OBJECTIFS -- one row per KPI line
         kpis = f.get("Indicateurs de performance (KPIs)")
         if kpis:
-            for kpi_line in [l.strip().lstrip("•-*").strip() for l in str(kpis).splitlines() if l.strip()]:
+            for kpi_line_raw in [l.strip().lstrip("•-*").strip() for l in str(kpis).splitlines() if l.strip()]:
+                kpi_line = truncate_field(kpi_line_raw, "RESULTAT_ATTENDU", ctx, truncation_log)
                 lines.append(
                     f"IF NOT EXISTS (SELECT 1 FROM dbo.POSTE_OBJECTIFS WHERE POSTE = {sql_str(poste)} "
                     f"AND RESULTAT_ATTENDU = {sql_str(kpi_line)})"
                 )
                 lines.append("BEGIN")
                 lines.append(
-                    "    INSERT INTO dbo.POSTE_OBJECTIFS (POSTE, OBJECTIF, MOYENS_PREVUS, RESULTAT_ATTENDU, "
-                    "CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE)"
+                    "    INSERT INTO dbo.POSTE_OBJECTIFS (POSTE, ID_OBJECTIF, OBJECTIF, MOYENS_PREVUS, "
+                    "RESULTAT_ATTENDU, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE)"
                 )
                 lines.append(
-                    f"    VALUES ({sql_str(poste)}, 2, {sql_str(kpi_line)}, {sql_str(kpi_line)}, "
+                    f"    VALUES ({sql_str(poste)}, @next_obj_id, 2, {sql_str(kpi_line)}, {sql_str(kpi_line)}, "
                     f"{sql_str(CREATED_BY)}, {sql_str(CREATED_BY)}, GETDATE(), GETDATE());"
                 )
+                lines.append("    SET @next_obj_id = @next_obj_id + 1;")
                 lines.append("END;")
 
         # POSTE_CRITERES -- one row per competence, matched by label against CODE_COMPETENCE.INTITULE
@@ -393,7 +459,8 @@ def main():
                     continue
                 intitule_comp = m.group(2).strip()
                 niveau_requis = m.group(3).strip() if m.group(3) else None
-                deg = niveau_requis if niveau_requis and niveau_requis.isdigit() else "NULL"
+                niveau_digits = re.sub(r"[^0-9]", "", niveau_requis) if niveau_requis else ""
+                deg = sql_str(niveau_digits[:1]) if niveau_digits else "NULL"
                 lines.append(
                     "    -- competence: recherche par intitule (a verifier / completer le code exact si connu)"
                 )
@@ -425,11 +492,24 @@ def main():
     with open(OUT_SQL, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))
 
+    rws7 = rwb.create_sheet("Troncatures appliquées")
+    rws7.append(["Poste", "Colonne", "Longueur originale", "Limite colonne", "Texte original"])
+    for context, colname, orig_len, limit, orig_text in truncation_log:
+        rws7.append([context, colname, orig_len, limit, orig_text])
+    rws7.column_dimensions["A"].width = 45
+    rws7.column_dimensions["B"].width = 22
+    rws7.column_dimensions["E"].width = 80
+
+    rwb.save(OUT_REVIEW)
+
+    max_poste_len = max(len(a["poste_code"]) for a in assigned)
     print(f"Postes traites: {len(assigned)} | deja en base (ignores): {n_skipped} | a inserer: {n_inserted}")
+    print(f"Longueur max des codes POSTE generes: {max_poste_len} (limite table: {POSTE_MAXLEN})")
     print(f"CODE_COMPETENCE manquants a inserer: {len(missing_comp)}")
     print(f"METIER non mappe: {len(unmapped_metier)} postes sur {len(seen_dirs)} directions")
     print(f"NIVEAU_ETUDE non mappe/ambigu: {len(unmapped_niveau)} postes")
     print(f"Competences non matchees (texte fiche vs CODE_COMPETENCE.INTITULE): {len(unmatched_competences)}")
+    print(f"Troncatures de champs appliquees (limites varchar reelles): {len(truncation_log)}")
     print(f"\nSQL: {OUT_SQL}")
     print(f"Review: {OUT_REVIEW}")
 
