@@ -7,6 +7,7 @@ Génère TOUS les indicateurs nécessaires pour le dashboard
 
 import pandas as pd
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 import numpy as np
@@ -57,7 +58,27 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
         df[col] = df[col].fillna('Non renseigné').astype(str).str.strip().replace('', 'Non renseigné')
     df['nb_heures'] = pd.to_numeric(df['nb_heures'], errors='coerce').fillna(0)
 
+    # Le même cabinet peut être saisi avec une casse différente d'une action à
+    # l'autre (ex. "MAE Academy" / "MAE ACADEMY") : on regroupe sur une clé
+    # normalisée tout en gardant un libellé d'affichage lisible.
+    df['cabinet'] = df['cabinet'].fillna('Non renseigné').astype(str).str.strip().replace('', 'Non renseigné')
+    df['cabinet_key'] = df['cabinet'].str.upper()
+    cabinet_display = {}
+    for key, label in zip(df['cabinet_key'], df['cabinet']):
+        cabinet_display.setdefault(key, label)
+
+    # Une action peut compter plusieurs dizaines de participants : si une saisie
+    # ultérieure porte une date différente de la 1ère ligne (erreur de saisie),
+    # elle ne doit pas faire "sortir" ces participants de leur action. Le N°
+    # Action fait foi : on aligne tous les participants sur la date de leur
+    # action (1ère ligne rencontrée pour ce N°).
     actions_df = df.drop_duplicates('n_action').copy()
+    date_debut_par_action = actions_df.set_index('n_action')['date_debut']
+    date_fin_par_action = actions_df.set_index('n_action')['date_fin']
+    df['date_debut'] = df['n_action'].map(date_debut_par_action)
+    df['date_fin'] = df['n_action'].map(date_fin_par_action)
+    df['annee'] = df['date_debut'].dt.year
+    actions_df['annee'] = actions_df['date_debut'].dt.year
 
     nb_actions = int(df['n_action'].nunique())
     nb_participations = int(len(df))
@@ -97,6 +118,19 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
     par_statut = {k: int(v) for k, v in df['statut'].value_counts().to_dict().items()}
     evaluation_chaud = {k: int(v) for k, v in df['eval_chaud'].value_counts().to_dict().items()}
 
+    # Synthèse par cabinet de formation (coûts déduits au niveau action, pas participation)
+    par_cabinet = {}
+    for key, sub_actions in actions_df.groupby('cabinet_key'):
+        nb_part_cabinet = int(len(df[df['cabinet_key'] == key]))
+        par_cabinet[cabinet_display[key]] = {
+            'nb_actions': int(len(sub_actions)),
+            'nb_participations': nb_part_cabinet,
+            'nb_jours': round(float(sub_actions['nb_jours'].fillna(0).sum()), 1),
+            'cout_total': round(float((sub_actions['cout_formation'].fillna(0) + sub_actions['cout_logistique'].fillna(0)).sum()), 2)
+        }
+
+    annees_disponibles = sorted({int(a) for a in df['annee'].dropna().unique()})
+
     # Évolution mensuelle (nombre d'actions démarrées et heures-stagiaires par mois)
     actions_df['mois_key'] = actions_df['date_debut'].dt.to_period('M').astype(str)
     df['mois_key'] = df['date_debut'].dt.to_period('M').astype(str)
@@ -119,9 +153,10 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
             'thematique': row['thematique'],
             'date_debut': row['date_debut'].strftime('%Y-%m-%d') if pd.notna(row['date_debut']) else '',
             'date_fin': row['date_fin'].strftime('%Y-%m-%d') if pd.notna(row['date_fin']) else '',
+            'annee': int(row['annee']) if pd.notna(row['annee']) else None,
             'nb_jours': float(row['nb_jours']) if pd.notna(row['nb_jours']) else 0,
             'nb_heures': float(row['nb_heures']) if pd.notna(row['nb_heures']) else 0,
-            'cabinet': str(row['cabinet']) if pd.notna(row['cabinet']) else '',
+            'cabinet': cabinet_display[row['cabinet_key']],
             'cout_formation': float(row['cout_formation']) if pd.notna(row['cout_formation']) else 0,
             'cout_logistique': float(row['cout_logistique']) if pd.notna(row['cout_logistique']) else 0,
             'nb_participants': nb_part_action
@@ -135,11 +170,13 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
             'domaine': row['domaine'],
             'thematique': row['thematique'],
             'date_debut': row['date_debut'].strftime('%Y-%m-%d') if pd.notna(row['date_debut']) else '',
+            'annee': int(row['annee']) if pd.notna(row['annee']) else None,
             'nom': row['nom'],
             'prenom': row['prenom'],
             'classification': row['classification'],
             'site': row['site'],
             'departement': row['departement'],
+            'cabinet': cabinet_display[row['cabinet_key']],
             'statut': row['statut'],
             'eval_chaud': row['eval_chaud']
         })
@@ -148,7 +185,8 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
         'meta': {
             'source_file': formation_path.name,
             'periode_min': mois_valides[0] if mois_valides else None,
-            'periode_max': mois_valides[-1] if mois_valides else None
+            'periode_max': mois_valides[-1] if mois_valides else None,
+            'annees_disponibles': annees_disponibles
         },
         'kpis': {
             'nb_actions': nb_actions,
@@ -171,6 +209,7 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
         'par_departement': par_departement,
         'par_classification': par_classification,
         'par_type_action': par_type_action,
+        'par_cabinet': par_cabinet,
         'par_statut': par_statut,
         'evaluation_chaud': evaluation_chaud,
         'evolution_mensuelle': evolution_mensuelle,
@@ -179,18 +218,141 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
     }
 
 def build_social_placeholder():
-    """Le volet Social attend un fichier de données dédié (absentéisme, AT/MP,
-    discipline, dialogue social, œuvres sociales...). Tant qu'il n'est pas fourni,
-    on expose un état vide explicite plutôt que d'inventer des indicateurs."""
+    """Le volet Social attend un fichier de données dédié. Tant qu'il n'est pas
+    fourni, on expose un état vide explicite plutôt que d'inventer des indicateurs."""
     return {
         'available': False,
         'message': "Le fichier de données Social n'a pas encore été fourni. "
-                   "Cette page affichera automatiquement les indicateurs sociaux "
-                   "(absentéisme, santé-sécurité, discipline, dialogue social, "
-                   "œuvres sociales...) dès sa réception."
+                   "Cette page affichera automatiquement les actions sociales et "
+                   "sociétales dès sa réception."
     }
 
-def generate_data(excel_path=None, output_path=None, formation_path=None):
+FR_MONTHS = {
+    'janvier': 1, 'fevrier': 2, 'février': 2, 'mars': 3, 'avril': 4, 'mai': 5,
+    'juin': 6, 'juillet': 7, 'aout': 8, 'août': 8, 'septembre': 9,
+    'octobre': 10, 'novembre': 11, 'decembre': 12, 'décembre': 12
+}
+
+def parse_periode_fr(raw):
+    """Parse une période FR libre ('Fevrier 2026', 'Juin - Juillet 2026') en
+    (année, mois_debut, mois_fin, libellé_normalisé)."""
+    text = str(raw).strip().lower().replace('\n', ' ')
+    year_match = re.search(r'(\d{4})', text)
+    annee = int(year_match.group(1)) if year_match else None
+    months_part = re.sub(r'\d{4}', '', text)
+    found = []
+    for name, num in FR_MONTHS.items():
+        idx = re.search(rf'\b{name}\b', months_part)
+        if idx:
+            found.append((idx.start(), num, name.capitalize()))
+    found.sort(key=lambda x: x[0])
+    mois_debut = found[0][1] if found else None
+    mois_fin = found[-1][1] if found else mois_debut
+    if not found:
+        libelle = str(raw).strip()
+    elif len(found) == 1 or found[0][2] == found[-1][2]:
+        libelle = f"{found[0][2]} {annee}" if annee else found[0][2]
+    else:
+        libelle = f"{found[0][2]} - {found[-1][2]} {annee}" if annee else f"{found[0][2]} - {found[-1][2]}"
+    return annee, mois_debut, mois_fin, libelle
+
+def split_multi(val):
+    return [p.strip() for p in str(val).split(',') if p.strip()]
+
+def parse_beneficiaires(val):
+    try:
+        return float(val), None
+    except (ValueError, TypeError):
+        return None, str(val).strip()
+
+def process_social(social_path):
+    """Traiter le fichier des Actions sociales et sociétales."""
+    social_path = Path(social_path)
+    if not social_path.exists():
+        return build_social_placeholder()
+
+    df = pd.read_excel(social_path, sheet_name=0)
+    df.columns = ['action', 'periode', 'beneficiaires_raw', 'budget', 'region_raw', 'site_raw'][:len(df.columns)]
+    df = df[df['action'].notna()].copy()
+
+    actions = []
+    par_region = {}
+    par_site = {}
+    mensuel = {}
+    total_budget = 0.0
+    total_beneficiaires = 0.0
+    nb_actions_beneficiaires_non_numerique = 0
+
+    for _, row in df.iterrows():
+        annee, mois_debut, mois_fin, periode_libelle = parse_periode_fr(row['periode'])
+        beneficiaires, beneficiaires_texte = parse_beneficiaires(row['beneficiaires_raw'])
+        budget = float(row['budget']) if pd.notna(row['budget']) else 0.0
+        regions = split_multi(row['region_raw']) if pd.notna(row['region_raw']) else []
+        sites = split_multi(row['site_raw']) if pd.notna(row['site_raw']) else []
+
+        total_budget += budget
+        if beneficiaires is not None:
+            total_beneficiaires += beneficiaires
+        else:
+            nb_actions_beneficiaires_non_numerique += 1
+
+        for r in regions:
+            par_region.setdefault(r, {'nb_actions': 0, 'budget': 0.0})
+            par_region[r]['nb_actions'] += 1
+            par_region[r]['budget'] += budget
+        for s in sites:
+            par_site.setdefault(s, {'nb_actions': 0, 'budget': 0.0})
+            par_site[s]['nb_actions'] += 1
+            par_site[s]['budget'] += budget
+
+        if annee and mois_debut:
+            key = f"{annee}-{mois_debut:02d}"
+            mensuel.setdefault(key, {'nb_actions': 0, 'budget': 0.0})
+            mensuel[key]['nb_actions'] += 1
+            mensuel[key]['budget'] += budget
+
+        action_text = str(row['action']).strip()
+        actions.append({
+            'titre': action_text[:90] + ('…' if len(action_text) > 90 else ''),
+            'description': action_text,
+            'periode': periode_libelle,
+            'annee': annee,
+            'beneficiaires': beneficiaires,
+            'beneficiaires_texte': beneficiaires_texte,
+            'budget': budget,
+            'regions': regions,
+            'sites': sites
+        })
+
+    annees_disponibles = sorted({a['annee'] for a in actions if a['annee']})
+    mois_keys = sorted(mensuel.keys())
+
+    return {
+        'available': True,
+        'meta': {
+            'source_file': social_path.name,
+            'annees_disponibles': annees_disponibles
+        },
+        'kpis': {
+            'nb_actions': len(actions),
+            'total_beneficiaires': int(total_beneficiaires),
+            'nb_actions_beneficiaires_non_numerique': nb_actions_beneficiaires_non_numerique,
+            'budget_total': round(total_budget, 2),
+            'budget_moyen_action': round(total_budget / len(actions), 2) if actions else 0,
+            'nb_regions': len(par_region),
+            'nb_sites': len(par_site)
+        },
+        'par_region': par_region,
+        'par_site': par_site,
+        'evolution_mensuelle': {
+            'labels': mois_keys,
+            'nb_actions': [mensuel[k]['nb_actions'] for k in mois_keys],
+            'budget': [round(mensuel[k]['budget'], 2) for k in mois_keys]
+        },
+        'actions': actions
+    }
+
+def generate_data(excel_path=None, output_path=None, formation_path=None, social_path=None):
     """Générer les données JSON depuis le fichier Excel"""
 
     # Chemins par défaut
@@ -208,7 +370,12 @@ def generate_data(excel_path=None, output_path=None, formation_path=None):
         formation_path = Path(__file__).parent / 'data' / 'FORMATION.xlsx'
     else:
         formation_path = Path(formation_path)
-    
+
+    if social_path is None:
+        social_path = Path(__file__).parent / 'data' / 'SOCIAL.xlsx'
+    else:
+        social_path = Path(social_path)
+
     if not excel_path.exists():
         print(f"❌ Erreur: Fichier non trouvé: {excel_path}")
         return False
@@ -671,8 +838,13 @@ def generate_data(excel_path=None, output_path=None, formation_path=None):
     else:
         print(f"   ⚠️ Fichier Formation non trouvé: {formation_path} (page Formation vide)")
 
-    # ============ SOCIAL (en attente de données) ============
-    social_stats = build_social_placeholder()
+    # ============ SOCIAL ============
+    social_stats = process_social(social_path)
+    if social_stats.get('available'):
+        print(f"🤝 Social: {social_stats['kpis']['nb_actions']} actions, "
+              f"{social_stats['kpis']['budget_total']:,.0f} MAD de budget")
+    else:
+        print(f"   ⚠️ Fichier Social non trouvé: {social_path} (page Social vide)")
 
     # ============ ASSEMBLAGE FINAL ============
     mois_noms = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']

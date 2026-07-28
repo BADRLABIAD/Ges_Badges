@@ -28,6 +28,7 @@ Dashboard_RH/
 ├── data/
 │   ├── TDB_COURANT.xlsx    # Fichier Excel source RH (à mettre à jour mensuellement)
 │   ├── FORMATION.xlsx      # Fichier Excel source Formation (plan de formation, à mettre à jour en continu)
+│   ├── SOCIAL.xlsx         # Fichier Excel source Social (actions sociales et sociétales)
 │   └── data.json           # Données générées (automatique)
 ├── scripts/
 │   └── generate_data.py    # Point d'entrée du cron mensuel (appelle generate_data.py à la racine)
@@ -174,14 +175,17 @@ froid, Résultat. Les colonnes propres à l'action (Domaine, dates, coûts...) n
 sont attendues que sur la première ligne de chaque formation ; le script
 propage automatiquement ces valeurs sur les lignes suivantes.
 
-### Volet Social (à venir)
+### Structure du fichier Social attendu (data/SOCIAL.xlsx)
 
-La page **Social** est en place dans l'interface mais reste en état vide tant
-qu'aucun fichier de données social n'est fourni (absentéisme, accidents du
-travail/maladies professionnelles, discipline, dialogue social, œuvres
-sociales...). Une fois ce fichier disponible, une fonction `process_social()`
-pourra être ajoutée dans `generate_data.py` sur le même modèle que
-`process_formation()`.
+Fichier optionnel : s'il est absent, la page **Social** affiche un état vide.
+Une seule feuille, une ligne par action, colonnes dans cet ordre : Actions
+(description), Date de réalisation (texte libre du type "Février 2026" ou
+"Juin - Juillet 2026"), Nombre de bénéficiaires, Budget, Région, Site(s)
+Sonasid concerné(s). Les régions/sites multiples sont séparés par des
+virgules. Le budget social annuel *alloué* (par opposition au budget
+*consommé*, calculé depuis le fichier) se saisit directement dans
+l'interface — champ "Budget Social Annuel Alloué" sur la page Social —
+et reste stocké dans le navigateur (pas de rechargement Excel nécessaire).
 
 ---
 
@@ -226,12 +230,20 @@ pourra être ajoutée dans `generate_data.py` sur le même modèle que
 | **Heures-stagiaires** | Somme des heures de formation × participants |
 | **Coût moyen par participant** | (Coût formation + logistique) / Nb participations |
 | **Taux d'investissement formation** | Coût total formation / Masse salariale YTD × 100 |
+| **Synthèse par cabinet** | Actions/participations/jours/coût regroupés par cabinet de formation, filtrable par année |
+
+### Indicateurs Social
+| Indicateur | Description |
+|------------|-------------|
+| **Budget consommé** | Somme des budgets des actions réalisées (issu de SOCIAL.xlsx) |
+| **Budget alloué** | Saisi manuellement dans l'interface (page Social), non issu d'un fichier |
+| **Taux de réalisation** | Budget consommé / Budget alloué × 100 |
 
 ---
 
 ## 🎨 Fonctionnalités
 
-- ✅ **7 pages** : Synthèse, Effectifs, Masse Salariale, Mouvements, Indicateurs, Formation, Social (en attente de données)
+- ✅ **7 pages** : Synthèse, Effectifs, Masse Salariale, Mouvements, Indicateurs, Formation, Social
 - ✅ **Filtres dynamiques** : Établissement, Classification, Type de contrat
 - ✅ **Recherche globale** : Matricule, Nom, Prénom, Fonction
 - ✅ **Export CSV** : Liste des collaborateurs

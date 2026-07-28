@@ -799,6 +799,7 @@
                     </div>
                     <div class="header-actions">
                         <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="formationSearch" placeholder="Rechercher une thématique, un cabinet..." onkeyup="applyFormationFilters()"></div>
+                        <select class="filter-select" id="filterFormationAnnee" onchange="applyFormationFilters()"><option value="">Toutes années</option></select>
                         <select class="filter-select" id="filterFormationDomaine" onchange="applyFormationFilters()"><option value="">Tous les domaines</option></select>
                         <select class="filter-select" id="filterFormationType" onchange="applyFormationFilters()"><option value="">Tous les types</option></select>
                         <select class="filter-select" id="filterFormationSite" onchange="applyFormationFilters()"><option value="">Tous les sites</option></select>
@@ -843,6 +844,20 @@
                         </div>
                         <div class="pagination" id="formationPagination"></div>
                     </div>
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title"><i class="fas fa-building-columns" style="color: var(--accent-purple); margin-right: 8px;"></i>Synthèse par Cabinet de Formation</div>
+                        </div>
+                        <div class="charts-grid" style="margin-bottom: 20px;">
+                            <div class="chart-card full-width"><div class="chart-header"><div><div class="chart-title">Coût par Cabinet</div><div class="chart-subtitle">Coût formation + logistique</div></div></div><div class="chart-container"><canvas id="formationCabinetChart"></canvas></div></div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table" id="formationCabinetTable">
+                                <thead><tr><th>Cabinet</th><th style="text-align:right;">Actions</th><th style="text-align:right;">Participations</th><th style="text-align:right;">Jours</th><th style="text-align:right;">Coût Total</th><th style="text-align:right;">Coût / Action</th></tr></thead>
+                                <tbody id="formationCabinetTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -851,7 +866,7 @@
                 <div class="page-header">
                     <div class="page-title-section">
                         <h1><i class="fas fa-handshake-angle" style="color: var(--secondary-blue); margin-right: 12px;"></i>Social</h1>
-                        <p>Bilan social : absentéisme, santé-sécurité, dialogue social, œuvres sociales</p>
+                        <p>Actions sociales et sociétales</p>
                     </div>
                 </div>
                 <div id="social-empty" class="empty-state">
@@ -862,6 +877,36 @@
                         <div class="chart-card" style="opacity: 0.55;"><div class="chart-header"><div><div class="chart-title"><i class="fas fa-truck-medical" style="margin-right:8px;"></i>Santé &amp; Sécurité (AT/MP)</div><div class="chart-subtitle">À venir</div></div></div></div>
                         <div class="chart-card" style="opacity: 0.55;"><div class="chart-header"><div><div class="chart-title"><i class="fas fa-scale-balanced" style="margin-right:8px;"></i>Discipline</div><div class="chart-subtitle">À venir</div></div></div></div>
                         <div class="chart-card" style="opacity: 0.55;"><div class="chart-header"><div><div class="chart-title"><i class="fas fa-people-arrows" style="margin-right:8px;"></i>Dialogue Social</div><div class="chart-subtitle">À venir</div></div></div></div>
+                    </div>
+                </div>
+                <div id="social-content" style="display:none;">
+                    <div class="kpi-grid" id="social-kpis"></div>
+                    <div class="table-card" style="background: #F8FAFC;">
+                        <div class="table-header"><div class="table-title"><i class="fas fa-piggy-bank" style="color: var(--accent-green); margin-right: 8px;"></i>Budget Social Annuel Alloué</div></div>
+                        <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                            <div>
+                                <label for="socialBudgetInput" style="display:block; font-size:12px; color: var(--text-secondary); margin-bottom:6px;">Budget alloué (MAD) — saisi manuellement</label>
+                                <input type="number" id="socialBudgetInput" class="filter-select" style="width:220px;" min="0" step="1000" placeholder="Ex: 3000000" oninput="onSocialBudgetInput()">
+                            </div>
+                            <div id="social-budget-summary" style="color: var(--text-secondary); font-size: 14px;"></div>
+                        </div>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Budget par Région</div></div></div><div class="chart-container"><canvas id="socialRegionChart"></canvas></div></div>
+                        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Actions par Site</div></div></div><div class="chart-container"><canvas id="socialSiteChart"></canvas></div></div>
+                        <div class="chart-card full-width"><div class="chart-header"><div><div class="chart-title">Évolution Mensuelle</div><div class="chart-subtitle">Budget engagé par mois de réalisation</div></div></div><div class="chart-container"><canvas id="socialEvolutionChart"></canvas></div></div>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title">Actions Sociales &amp; Sociétales <span id="socialActionsCount" style="color: var(--text-muted); font-weight: 400;"></span></div>
+                            <div class="table-actions"><button class="btn-export" onclick="exportSocialActionsCSV()"><i class="fas fa-download"></i>Export CSV</button></div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table" id="socialActionsTable">
+                                <thead><tr><th>Action</th><th>Période</th><th style="text-align:right;">Bénéficiaires</th><th style="text-align:right;">Budget</th><th>Région(s)</th><th>Site(s)</th></tr></thead>
+                                <tbody id="socialActionsTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -979,9 +1024,13 @@
 
             // Filtres Formation
             if (appData.formation) {
+                const fAnnees = appData.formation.meta.annees_disponibles || [];
                 const fDomaines = Object.keys(appData.formation.par_domaine).sort();
                 const fTypes = Object.keys(appData.formation.par_type_action).sort();
                 const fSites = Object.keys(appData.formation.par_site).sort();
+                const selAnnee = document.getElementById('filterFormationAnnee');
+                selAnnee.innerHTML = '<option value="">Toutes années</option>';
+                fAnnees.forEach(a => selAnnee.innerHTML += `<option value="${a}">${a}</option>`);
                 const selDomaine = document.getElementById('filterFormationDomaine');
                 selDomaine.innerHTML = '<option value="">Tous les domaines</option>';
                 fDomaines.forEach(d => selDomaine.innerHTML += `<option value="${d}">${d}</option>`);
@@ -1736,9 +1785,40 @@
             renderFormationSiteChart();
             renderFormationStatutChart();
             renderFormationEvolutionChart();
+            renderFormationCabinetChart();
+            renderFormationCabinetTable();
             renderFormationActionsTable();
             formationCurrentPage = 1;
             renderFormationParticipationsTable();
+        }
+
+        function renderFormationCabinetChart() {
+            const ctx = document.getElementById('formationCabinetChart').getContext('2d');
+            const data = appData.formation.par_cabinet;
+            const keys = Object.keys(data).sort((a, b) => data[b].cout_total - data[a].cout_total);
+            if (charts.formationCabinet) charts.formationCabinet.destroy();
+            charts.formationCabinet = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: keys, datasets: [{ label: 'Coût Total (MAD)', data: keys.map(k => data[k].cout_total), backgroundColor: '#FF6B35', borderRadius: 6 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.raw) } } },
+                    scales: { x: { ticks: { callback: (value) => formatNumber(value / 1000, 0) + 'K' } } }
+                }
+            });
+        }
+
+        function renderFormationCabinetTable() {
+            const data = appData.formation.par_cabinet;
+            const keys = Object.keys(data).sort((a, b) => data[b].cout_total - data[a].cout_total);
+            let html = '';
+            keys.forEach(cabinet => {
+                const c = data[cabinet];
+                const coutParAction = c.nb_actions > 0 ? c.cout_total / c.nb_actions : 0;
+                html += `<tr><td><strong>${cabinet}</strong></td><td style="text-align:right;">${c.nb_actions}</td><td style="text-align:right;">${c.nb_participations}</td><td style="text-align:right;">${formatNumber(c.nb_jours, 1)}</td><td style="text-align:right;">${c.cout_total > 0 ? formatCurrency(c.cout_total) : '-'}</td><td style="text-align:right;">${coutParAction > 0 ? formatCurrency(coutParAction) : '-'}</td></tr>`;
+            });
+            document.getElementById('formationCabinetTableBody').innerHTML = html || '<tr><td colspan="6" class="empty-state">Aucun résultat</td></tr>';
         }
 
         function renderFormationDomaineChart() {
@@ -1800,22 +1880,25 @@
 
         function applyFormationFilters() {
             const searchTerm = (document.getElementById('formationSearch').value || '').toLowerCase();
+            const anneeFilter = document.getElementById('filterFormationAnnee').value;
             const domaineFilter = document.getElementById('filterFormationDomaine').value;
             const typeFilter = document.getElementById('filterFormationType').value;
             const siteFilter = document.getElementById('filterFormationSite').value;
 
             filteredFormationActions = appData.formation.actions.filter(a => {
                 const matchSearch = !searchTerm || a.thematique.toLowerCase().includes(searchTerm) || a.cabinet.toLowerCase().includes(searchTerm);
+                const matchAnnee = !anneeFilter || String(a.annee) === anneeFilter;
                 const matchDomaine = !domaineFilter || a.domaine === domaineFilter;
                 const matchType = !typeFilter || a.type_action === typeFilter;
-                return matchSearch && matchDomaine && matchType;
+                return matchSearch && matchAnnee && matchDomaine && matchType;
             });
 
             filteredFormationParticipations = appData.formation.participations.filter(p => {
                 const matchSearch = !searchTerm || p.thematique.toLowerCase().includes(searchTerm) || p.nom.toLowerCase().includes(searchTerm) || p.prenom.toLowerCase().includes(searchTerm);
+                const matchAnnee = !anneeFilter || String(p.annee) === anneeFilter;
                 const matchDomaine = !domaineFilter || p.domaine === domaineFilter;
                 const matchSite = !siteFilter || p.site === siteFilter;
-                return matchSearch && matchDomaine && matchSite;
+                return matchSearch && matchAnnee && matchDomaine && matchSite;
             });
 
             formationCurrentPage = 1;
@@ -1825,6 +1908,7 @@
 
         function resetFormationFilters() {
             document.getElementById('formationSearch').value = '';
+            document.getElementById('filterFormationAnnee').value = '';
             document.getElementById('filterFormationDomaine').value = '';
             document.getElementById('filterFormationType').value = '';
             document.getElementById('filterFormationSite').value = '';
@@ -1890,17 +1974,126 @@
         }
 
         // ============================================================
-        // SOCIAL (en attente du fichier de données dédié)
+        // SOCIAL — Actions sociales et sociétales
         // ============================================================
+        const SOCIAL_BUDGET_STORAGE_KEY = 'dashboardRH_socialBudgetAlloue';
+        const socialColors = ['#1E3A5F', '#FF6B35', '#00B4A0', '#6B5BFF', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6'];
+
         function renderSocial() {
             const social = appData.social;
             if (!social) return;
             const badge = document.getElementById('socialNavBadge');
-            if (social.available) {
-                if (badge) badge.remove();
-            } else {
+            const emptyEl = document.getElementById('social-empty');
+            const contentEl = document.getElementById('social-content');
+
+            if (!social.available) {
                 document.getElementById('social-empty-message').textContent = social.message;
+                emptyEl.style.display = 'block';
+                contentEl.style.display = 'none';
+                return;
             }
+
+            if (badge) badge.remove();
+            emptyEl.style.display = 'none';
+            contentEl.style.display = 'block';
+
+            const k = social.kpis;
+            document.getElementById('social-kpis').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-hands-holding-child"></i></div><div class="kpi-label">Actions Sociales &amp; Sociétales</div><div class="kpi-value">${formatNumber(k.nb_actions)}</div><div class="kpi-trend">${social.meta.annees_disponibles.join(', ')}</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-people-group"></i></div><div class="kpi-label">Bénéficiaires</div><div class="kpi-value">${formatNumber(k.total_beneficiaires)}</div><div class="kpi-trend">${k.nb_actions_beneficiaires_non_numerique > 0 ? k.nb_actions_beneficiaires_non_numerique + ' action(s) non chiffrée(s) en bénéficiaires' : 'Toutes actions chiffrées'}</div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-coins"></i></div><div class="kpi-label">Budget Consommé</div><div class="kpi-value">${formatNumber(k.budget_total / 1000, 0)}<span class="kpi-unit">K MAD</span></div><div class="kpi-trend">Cumul des actions réalisées</div></div>
+                <div class="kpi-card teal"><div class="kpi-icon teal"><i class="fas fa-calculator"></i></div><div class="kpi-label">Budget Moyen / Action</div><div class="kpi-value">${formatNumber(k.budget_moyen_action / 1000, 0)}<span class="kpi-unit">K MAD</span></div></div>
+                <div class="kpi-card purple"><div class="kpi-icon purple"><i class="fas fa-map-location-dot"></i></div><div class="kpi-label">Régions Couvertes</div><div class="kpi-value">${formatNumber(k.nb_regions)}</div></div>
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-industry"></i></div><div class="kpi-label">Sites Sonasid Impliqués</div><div class="kpi-value">${formatNumber(k.nb_sites)}</div></div>`;
+
+            const savedBudget = localStorage.getItem(SOCIAL_BUDGET_STORAGE_KEY);
+            document.getElementById('socialBudgetInput').value = savedBudget || '';
+            updateSocialBudgetSummary();
+
+            renderSocialRegionChart();
+            renderSocialSiteChart();
+            renderSocialEvolutionChart();
+            renderSocialActionsTable();
+        }
+
+        function onSocialBudgetInput() {
+            const val = document.getElementById('socialBudgetInput').value;
+            if (val === '') localStorage.removeItem(SOCIAL_BUDGET_STORAGE_KEY);
+            else localStorage.setItem(SOCIAL_BUDGET_STORAGE_KEY, val);
+            updateSocialBudgetSummary();
+        }
+
+        function updateSocialBudgetSummary() {
+            const budgetAlloue = parseFloat(document.getElementById('socialBudgetInput').value);
+            const budgetConsomme = appData.social.kpis.budget_total;
+            const summaryEl = document.getElementById('social-budget-summary');
+            if (!budgetAlloue || budgetAlloue <= 0) {
+                summaryEl.innerHTML = `Budget consommé à ce jour : <strong>${formatCurrency(budgetConsomme)}</strong>. Saisissez un budget alloué pour calculer le taux de réalisation.`;
+                return;
+            }
+            const taux = (budgetConsomme / budgetAlloue) * 100;
+            const color = taux > 100 ? 'var(--danger)' : (taux > 85 ? 'var(--warning)' : 'var(--accent-green)');
+            summaryEl.innerHTML = `Consommé : <strong>${formatCurrency(budgetConsomme)}</strong> sur <strong>${formatCurrency(budgetAlloue)}</strong> alloués — Taux de réalisation : <strong style="color:${color};">${formatNumber(taux, 1)}%</strong>`;
+        }
+
+        function renderSocialRegionChart() {
+            const ctx = document.getElementById('socialRegionChart').getContext('2d');
+            const data = appData.social.par_region;
+            const keys = Object.keys(data).sort((a, b) => data[b].budget - data[a].budget);
+            if (charts.socialRegion) charts.socialRegion.destroy();
+            charts.socialRegion = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: keys, datasets: [{ label: 'Budget', data: keys.map(k => data[k].budget), backgroundColor: socialColors, borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { maxRotation: 30 } }, y: { ticks: { callback: (v) => formatNumber(v / 1000, 0) + 'K' } } } }
+            });
+        }
+
+        function renderSocialSiteChart() {
+            const ctx = document.getElementById('socialSiteChart').getContext('2d');
+            const data = appData.social.par_site;
+            const keys = Object.keys(data);
+            if (charts.socialSite) charts.socialSite.destroy();
+            charts.socialSite = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: keys, datasets: [{ data: keys.map(k => data[k].nb_actions), backgroundColor: socialColors, borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function renderSocialEvolutionChart() {
+            const ctx = document.getElementById('socialEvolutionChart').getContext('2d');
+            const data = appData.social.evolution_mensuelle;
+            if (charts.socialEvolution) charts.socialEvolution.destroy();
+            charts.socialEvolution = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: data.labels, datasets: [{ label: 'Budget engagé', data: data.budget, backgroundColor: '#1E3A5F', borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.raw) } } }, scales: { y: { ticks: { callback: (v) => formatNumber(v / 1000, 0) + 'K' } } } }
+            });
+        }
+
+        function renderSocialActionsTable() {
+            const actions = appData.social.actions;
+            let html = '';
+            actions.forEach(a => {
+                const beneficiaires = a.beneficiaires !== null ? formatNumber(a.beneficiaires) : (a.beneficiaires_texte || '-');
+                html += `<tr><td title="${a.description.replace(/"/g, '&quot;')}">${a.titre}</td><td>${a.periode}</td><td style="text-align:right;">${beneficiaires}</td><td style="text-align:right;">${formatCurrency(a.budget)}</td><td>${a.regions.join(', ') || '-'}</td><td>${a.sites.join(', ') || '-'}</td></tr>`;
+            });
+            document.getElementById('socialActionsTableBody').innerHTML = html || '<tr><td colspan="6" class="empty-state">Aucune action</td></tr>';
+            document.getElementById('socialActionsCount').textContent = `(${actions.length})`;
+        }
+
+        function exportSocialActionsCSV() {
+            const headers = ['Action', 'Période', 'Bénéficiaires', 'Budget', 'Régions', 'Sites'];
+            let csv = headers.join(';') + '\n';
+            appData.social.actions.forEach(a => {
+                const beneficiaires = a.beneficiaires !== null ? a.beneficiaires : (a.beneficiaires_texte || '');
+                csv += [`"${a.description.replace(/"/g, '""')}"`, a.periode, beneficiaires, a.budget, a.regions.join(' / '), a.sites.join(' / ')].join(';') + '\n';
+            });
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `social_actions_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
         }
 
         document.querySelectorAll('.nav-link').forEach(link => {
