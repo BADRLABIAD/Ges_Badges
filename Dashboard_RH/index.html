@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard RH 2026 - Portail Ressources Humaines</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-orange: #FF6B35;
+            --primary-orange-light: #FF8F66;
+            --primary-orange-dark: #E54E1B;
+            --secondary-blue: #1E3A5F;
+            --secondary-blue-light: #2A4F7F;
+            --accent-teal: #00B4A0;
+            --accent-green: #22C55E;
+            --accent-purple: #6B5BFF;
+            --bg-main: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --bg-sidebar: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+            overflow-y: auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+
+        .logo-text-container { display: flex; flex-direction: column; }
+        .logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            color: var(--secondary-blue);
+        }
+        .logo-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .nav-section { margin-bottom: 24px; }
+        .nav-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            padding: 0 12px;
+            margin-bottom: 8px;
+        }
+        .nav-menu { list-style: none; }
+        .nav-item { margin-bottom: 4px; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            background: #FFF5F2;
+            color: var(--primary-orange);
+        }
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+        .nav-link i { width: 20px; font-size: 16px; }
+        .nav-link { position: relative; justify-content: space-between; }
+        .nav-link-label { display: flex; align-items: center; gap: 12px; }
+        .nav-badge {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 7px;
+            border-radius: 20px;
+            background: #F1F5F9;
+            color: var(--text-muted);
+        }
+        .nav-link.active .nav-badge { background: rgba(255,255,255,0.25); color: white; }
+        .nav-section + .nav-section { margin-top: 4px; }
+
+        .data-source {
+            margin-top: auto;
+            padding: 16px;
+            background: #F1F5F9;
+            border-radius: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .data-source-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .data-source-file {
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
+        }
+        .btn-refresh {
+            margin-top: 12px;
+            width: 100%;
+            padding: 10px;
+            background: var(--secondary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-refresh:hover { background: var(--secondary-blue-light); }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 24px 32px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .page-title-section h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--secondary-blue);
+            margin-bottom: 4px;
+        }
+        .page-title-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0 16px;
+            width: 280px;
+            transition: all 0.2s;
+        }
+        .search-bar:focus-within {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+        .search-bar i { color: var(--text-muted); font-size: 14px; }
+        .search-bar input {
+            border: none;
+            background: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+        }
+        .search-bar input::placeholder { color: var(--text-muted); }
+
+        .filter-select {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: white;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            min-width: 140px;
+            transition: all 0.2s;
+        }
+        .filter-select:focus {
+            border-color: var(--primary-orange);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        .btn-reset {
+            padding: 12px 20px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-reset:hover {
+            background: #FFF5F2;
+            border-color: var(--primary-orange);
+            color: var(--primary-orange);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-orange), var(--primary-orange-light));
+        }
+        .kpi-card.blue::before { background: linear-gradient(90deg, var(--secondary-blue), var(--secondary-blue-light)); }
+        .kpi-card.green::before { background: linear-gradient(90deg, var(--accent-green), #4ADE80); }
+        .kpi-card.teal::before { background: linear-gradient(90deg, var(--accent-teal), #2DD4BF); }
+        .kpi-card.purple::before { background: linear-gradient(90deg, var(--accent-purple), #818CF8); }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+        .kpi-icon.orange { background: #FFF5F2; color: var(--primary-orange); }
+        .kpi-icon.blue { background: #EFF6FF; color: var(--secondary-blue); }
+        .kpi-icon.green { background: #F0FDF4; color: var(--accent-green); }
+        .kpi-icon.teal { background: #F0FDFA; color: var(--accent-teal); }
+        .kpi-icon.purple { background: #F5F3FF; color: var(--accent-purple); }
+
+        .kpi-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+        .kpi-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .kpi-unit { font-size: 14px; font-weight: 400; color: var(--text-secondary); margin-left: 4px; }
+        .kpi-trend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 12px; font-weight: 500; }
+        .kpi-trend.up { color: var(--accent-green); }
+        .kpi-trend.down { color: var(--danger); }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+        .chart-card.full-width { grid-column: span 2; }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .chart-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .chart-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .chart-container { position: relative; height: 280px; }
+        .chart-container.pyramid { height: 350px; }
+
+        /* Tables */
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .table-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .table-actions { display: flex; gap: 8px; }
+        .btn-export {
+            padding: 8px 16px;
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-export:hover { background: #16A34A; }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th {
+            text-align: left;
+            padding: 12px 16px;
+            background: #F8FAFC;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .data-table tbody tr:hover { background: #F8FAFC; }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge.success { background: #DCFCE7; color: #166534; }
+        .badge.warning { background: #FEF3C7; color: #92400E; }
+        .badge.danger { background: #FEE2E2; color: #991B1B; }
+        .badge.info { background: #DBEAFE; color: #1E40AF; }
+        .badge.neutral { background: #F1F5F9; color: #475569; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .pagination-info { font-size: 13px; color: var(--text-secondary); }
+        .pagination-buttons { display: flex; gap: 4px; }
+        .pagination-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover:not(:disabled) { border-color: var(--primary-orange); color: var(--primary-orange); }
+        .pagination-btn.active { background: var(--primary-orange); border-color: var(--primary-orange); color: white; }
+        .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Indicators */
+        .indicator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .indicator-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .indicator-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .indicator-value.positive { color: var(--accent-green); }
+        .indicator-value.negative { color: var(--danger); }
+        .indicator-value.neutral { color: var(--secondary-blue); }
+        .indicator-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .indicator-desc { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+        .two-col-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .chart-card.full-width { grid-column: span 1; }
+        }
+        @media (max-width: 992px) {
+            .sidebar { width: 80px; padding: 16px 8px; }
+            .logo-text-container, .nav-link span, .nav-title, .data-source { display: none; }
+            .logo { justify-content: center; padding: 8px; }
+            .nav-link { justify-content: center; padding: 12px; }
+            .main-content { margin-left: 80px; }
+            .two-col-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; }
+            .header-actions { width: 100%; }
+            .search-bar { width: 100%; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-users"></i></div>
+                <div class="logo-text-container">
+                    <span class="logo-text">Dashboard RH</span>
+                    <span class="logo-subtitle">Portail Analytics</span>
+                </div>
+            </div>
+
+            <nav class="nav-section">
+                <div class="nav-title">Pilotage RH</div>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a class="nav-link active" data-page="synthese"><span class="nav-link-label"><i class="fas fa-chart-pie"></i><span>Synthèse</span></span></a></li>
+                    <li class="nav-item"><a class="nav-link" data-page="effectifs"><span class="nav-link-label"><i class="fas fa-user-group"></i><span>Effectifs</span></span></a></li>
+                    <li class="nav-item"><a class="nav-link" data-page="masse-salariale"><span class="nav-link-label"><i class="fas fa-coins"></i><span>Masse Salariale</span></span></a></li>
+                    <li class="nav-item"><a class="nav-link" data-page="mouvements"><span class="nav-link-label"><i class="fas fa-arrows-rotate"></i><span>Mouvements</span></span></a></li>
+                    <li class="nav-item"><a class="nav-link" data-page="indicateurs"><span class="nav-link-label"><i class="fas fa-gauge-high"></i><span>Indicateurs</span></span></a></li>
+                </ul>
+            </nav>
+
+            <nav class="nav-section">
+                <div class="nav-title">Développement &amp; Social</div>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a class="nav-link" data-page="formation"><span class="nav-link-label"><i class="fas fa-graduation-cap"></i><span>Formation</span></span></a></li>
+                    <li class="nav-item"><a class="nav-link" data-page="social"><span class="nav-link-label"><i class="fas fa-handshake-angle"></i><span>Social</span></span><span class="nav-badge" id="socialNavBadge">Bientôt</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="data-source">
+                <div class="data-source-title"><i class="fas fa-database"></i>Source des données</div>
+                <div id="dataSourceInfo">Chargement...</div>
+                <div class="data-source-file" id="dataFileName">-</div>
+                <button class="btn-refresh" onclick="loadData()"><i class="fas fa-sync-alt"></i>Actualiser</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Synthèse -->
+            <div id="page-synthese" class="page active">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1><i class="fas fa-chart-pie" style="color: var(--primary-orange); margin-right: 12px;"></i>Synthèse RH</h1>
+                        <p>Vue d'ensemble des indicateurs clés</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="globalSearch" placeholder="Rechercher..." onkeyup="applyFilters()">
+                        </div>
+                        <select class="filter-select" id="filterAnnee" onchange="applyFilters()"><option value="">Toutes années</option></select>
+                        <select class="filter-select" id="filterMois" onchange="applyFilters()"><option value="">Tous mois</option></select>
+                        <select class="filter-select" id="filterEtb" onchange="applyFilters()"><option value="">Tous les sites</option></select>
+                        <select class="filter-select" id="filterClass" onchange="applyFilters()"><option value="">Toutes classifications</option></select>
+                        <select class="filter-select" id="filterContrat" onchange="applyFilters()"><option value="">Tous contrats</option></select>
+                        <select class="filter-select" id="filterSection" onchange="applyFilters()"><option value="">Toutes sections</option></select>
+                        <button class="btn-reset" onclick="resetFilters()"><i class="fas fa-undo"></i>Réinitialiser</button>
+                    </div>
+                </div>
+                <div class="kpi-grid" id="synthese-kpis"></div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header"><div><div class="chart-title">Pyramide des Âges</div><div class="chart-subtitle">Répartition par genre</div></div></div>
+                        <div class="chart-container pyramid"><canvas id="pyramideAgeChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header"><div><div class="chart-title">Pyramide d'Ancienneté</div><div class="chart-subtitle">Répartition par tranche</div></div></div>
+                        <div class="chart-container pyramid"><canvas id="pyramideAncienneteChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header"><div><div class="chart-title">Répartition par Classification</div><div class="chart-subtitle">Cadre, Maîtrise, Employé</div></div></div>
+                        <div class="chart-container"><canvas id="classificationChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header"><div><div class="chart-title">Répartition par Établissement</div><div class="chart-subtitle">Sites géographiques</div></div></div>
+                        <div class="chart-container"><canvas id="etablissementChart"></canvas></div>
+                    </div>
+                    <div class="chart-card full-width">
+                        <div class="chart-header"><div><div class="chart-title">Répartition par Section Analytique</div><div class="chart-subtitle">GRADE_LIB</div></div></div>
+                        <div class="chart-container"><canvas id="sectionChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Effectifs -->
+            <div id="page-effectifs" class="page">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1><i class="fas fa-user-group" style="color: var(--secondary-blue); margin-right: 12px;"></i>Effectifs</h1>
+                        <p>Gestion et analyse des collaborateurs</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="employeeSearch" placeholder="Rechercher un collaborateur..." onkeyup="applyFilters()"></div>
+                        <select class="filter-select" id="filterAnnee2" onchange="applyFilters()"><option value="">Toutes années</option></select>
+                        <select class="filter-select" id="filterMois2" onchange="applyFilters()"><option value="">Tous mois</option></select>
+                        <select class="filter-select" id="filterEtb2" onchange="applyFilters()"><option value="">Tous les sites</option></select>
+                        <select class="filter-select" id="filterClass2" onchange="applyFilters()"><option value="">Toutes classifications</option></select>
+                        <select class="filter-select" id="filterContrat2" onchange="applyFilters()"><option value="">Tous contrats</option></select>
+                        <select class="filter-select" id="filterSection2" onchange="applyFilters()"><option value="">Toutes sections</option></select>
+                        <button class="btn-reset" onclick="resetFilters()"><i class="fas fa-rotate-left"></i>Réinitialiser</button>
+                    </div>
+                </div>
+                <div class="kpi-grid" id="effectifs-stats"></div>
+                <div class="charts-grid">
+                    <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Effectif par Établissement</div></div></div><div class="chart-container"><canvas id="effectifEtbChart"></canvas></div></div>
+                    <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Effectif par Classification</div></div></div><div class="chart-container"><canvas id="effectifClassChart"></canvas></div></div>
+                    <div class="chart-card full-width"><div class="chart-header"><div><div class="chart-title">Effectif par Section Analytique</div><div class="chart-subtitle">GRADE_LIB</div></div></div><div class="chart-container"><canvas id="effectifSectionChart"></canvas></div></div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header">
+                        <div class="table-title">Liste des Collaborateurs <span id="employeeCount" style="color: var(--text-muted); font-weight: 400;"></span></div>
+                        <div class="table-actions"><button class="btn-export" onclick="exportCSV()"><i class="fas fa-download"></i>Export CSV</button></div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" id="employeeTable">
+                            <thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Établissement</th><th>Section</th><th>Classification</th><th>Fonction</th><th>Âge</th><th>Anc.</th><th>Contrat</th><th>Date Fin Prév.</th></tr></thead>
+                            <tbody id="employeeTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="employeePagination"></div>
+                </div>
+            </div>
+
+            <!-- Page Masse Salariale -->
+            <div id="page-masse-salariale" class="page">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1><i class="fas fa-coins" style="color: var(--accent-teal); margin-right: 12px;"></i>Masse Salariale</h1>
+                        <p>Analyse des coûts salariaux</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-reset" onclick="resetFilters()"><i class="fas fa-rotate-left"></i>Réinitialiser</button>
+                    </div>
+                </div>
+                <div class="kpi-grid" id="ms-kpis"></div>
+                <div class="charts-grid">
+                    <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Masse Salariale par Établissement</div></div></div><div class="chart-container"><canvas id="msEtbChart"></canvas></div></div>
+                    <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Masse Salariale par Classification</div></div></div><div class="chart-container"><canvas id="msClassChart"></canvas></div></div>
+                    <div class="chart-card full-width"><div class="chart-header"><div><div class="chart-title">Évolution Mensuelle</div><div class="chart-subtitle">Masse salariale par mois</div></div></div><div class="chart-container"><canvas id="msEvolutionChart"></canvas></div></div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header">
+                        <div class="table-title">Détail par Rubrique</div>
+                        <div class="table-actions"><button class="btn-export" onclick="exportMsDetailCSV()"><i class="fas fa-download"></i>Export CSV</button></div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" id="msDetailTable">
+                            <thead><tr><th>Compte</th><th>Intitulé</th><th>Établissement</th><th>Classification</th><th style="text-align: right;">Montant</th></tr></thead>
+                            <tbody id="msDetailTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="msPagination"></div>
+                </div>
+            </div>
+
+            <!-- Page Mouvements -->
+            <div id="page-mouvements" class="page">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1><i class="fas fa-arrows-rotate" style="color: var(--accent-purple); margin-right: 12px;"></i>Mouvements</h1>
+                        <p>Recrutements et départs</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="mvtSearch" placeholder="Rechercher matricule, nom..." onkeyup="filterMouvements()"></div>
+                        <select class="filter-select" id="filterMoisMvt" onchange="filterMouvements()">
+                            <option value="">Tous les mois</option>
+                            <option value="01">Janvier</option>
+                            <option value="02">Février</option>
+                            <option value="03">Mars</option>
+                            <option value="04">Avril</option>
+                            <option value="05">Mai</option>
+                            <option value="06">Juin</option>
+                            <option value="07">Juillet</option>
+                            <option value="08">Août</option>
+                            <option value="09">Septembre</option>
+                            <option value="10">Octobre</option>
+                            <option value="11">Novembre</option>
+                            <option value="12">Décembre</option>
+                        </select>
+                        <button class="btn-reset" onclick="resetMvtFilters()"><i class="fas fa-rotate-left"></i>Réinitialiser</button>
+                    </div>
+                </div>
+                <div class="indicator-grid" id="mvt-indicators"></div>
+                <div class="charts-grid">
+                    <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Recrutements par Site</div></div></div><div class="chart-container"><canvas id="recrutementsSiteChart"></canvas></div></div>
+                    <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Motifs de Départ</div></div></div><div class="chart-container"><canvas id="departsMotifChart"></canvas></div></div>
+                </div>
+                <div class="two-col-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title"><i class="fas fa-user-plus" style="color: var(--accent-green); margin-right: 8px;"></i>Recrutements <span id="recCount" style="color: var(--text-muted); font-weight: 400;"></span></div>
+                            <div class="table-actions"><button class="btn-export" onclick="exportRecrutementsCSV()"><i class="fas fa-download"></i>Export</button></div>
+                        </div>
+                        <table class="data-table"><thead><tr><th>Matricule</th><th>Nom</th><th>Site</th><th>Collège</th><th>Date Recrutement</th></tr></thead><tbody id="recrutementsTableBody"></tbody></table>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title"><i class="fas fa-user-minus" style="color: var(--danger); margin-right: 8px;"></i>Départs <span id="depCount" style="color: var(--text-muted); font-weight: 400;"></span></div>
+                            <div class="table-actions"><button class="btn-export" onclick="exportDepartsCSV()"><i class="fas fa-download"></i>Export</button></div>
+                        </div>
+                        <table class="data-table"><thead><tr><th>Matricule</th><th>Nom</th><th>Site</th><th>Date Départ</th><th>Motif</th></tr></thead><tbody id="departsTableBody"></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Indicateurs -->
+            <div id="page-indicateurs" class="page">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1><i class="fas fa-gauge-high" style="color: var(--primary-orange); margin-right: 12px;"></i>Indicateurs RH</h1>
+                        <p>Tableau de bord des KPIs stratégiques</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-reset" onclick="resetFilters()"><i class="fas fa-rotate-left"></i>Réinitialiser</button>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header"><div class="table-title"><i class="fas fa-rotate" style="color: var(--accent-purple); margin-right: 8px;"></i>Indicateurs de Rotation</div></div>
+                    <div class="indicator-grid" id="rotation-indicators"></div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header"><div class="table-title"><i class="fas fa-people-group" style="color: var(--secondary-blue); margin-right: 8px;"></i>Indicateurs Démographiques</div></div>
+                    <div class="indicator-grid" id="demo-indicators"></div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header"><div class="table-title"><i class="fas fa-shield-halved" style="color: var(--accent-teal); margin-right: 8px;"></i>Indicateurs de Stabilité et Structure</div></div>
+                    <div class="indicator-grid" id="stability-indicators"></div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header"><div class="table-title"><i class="fas fa-wallet" style="color: var(--accent-green); margin-right: 8px;"></i>Indicateurs Financiers</div></div>
+                    <div class="indicator-grid" id="financial-indicators"></div>
+                </div>
+                <div class="table-card">
+                    <div class="table-header"><div class="table-title"><i class="fas fa-building" style="color: var(--primary-orange); margin-right: 8px;"></i>Détail par Établissement</div></div>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" id="etbDetailTable">
+                            <thead><tr><th>Établissement</th><th style="text-align: right;">Effectif</th><th style="text-align: right;">Âge Moyen</th><th style="text-align: right;">Ancienneté Moy.</th><th style="text-align: right;">Masse Salariale</th><th style="text-align: right;">Coût/ETP</th></tr></thead>
+                            <tbody id="etbDetailTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Formation -->
+            <div id="page-formation" class="page">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1><i class="fas fa-graduation-cap" style="color: var(--accent-purple); margin-right: 12px;"></i>Formation</h1>
+                        <p>Plan de formation, participations et coûts</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="formationSearch" placeholder="Rechercher une thématique, un cabinet..." onkeyup="applyFormationFilters()"></div>
+                        <select class="filter-select" id="filterFormationDomaine" onchange="applyFormationFilters()"><option value="">Tous les domaines</option></select>
+                        <select class="filter-select" id="filterFormationType" onchange="applyFormationFilters()"><option value="">Tous les types</option></select>
+                        <select class="filter-select" id="filterFormationSite" onchange="applyFormationFilters()"><option value="">Tous les sites</option></select>
+                        <button class="btn-reset" onclick="resetFormationFilters()"><i class="fas fa-rotate-left"></i>Réinitialiser</button>
+                    </div>
+                </div>
+                <div id="formation-empty" class="empty-state" style="display:none;">
+                    <i class="fas fa-graduation-cap"></i>
+                    <p>Aucune donnée de formation disponible. Déposez le fichier <code>FORMATION.xlsx</code> dans <code>data/</code> puis actualisez.</p>
+                </div>
+                <div id="formation-content">
+                    <div class="kpi-grid" id="formation-kpis"></div>
+                    <div class="charts-grid">
+                        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Actions par Domaine</div><div class="chart-subtitle">Nombre de participations</div></div></div><div class="chart-container"><canvas id="formationDomaineChart"></canvas></div></div>
+                        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Répartition par Type d'Action</div><div class="chart-subtitle">Planifiée, non planifiée, interne/FPS</div></div></div><div class="chart-container"><canvas id="formationTypeChart"></canvas></div></div>
+                        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Participations par Site</div></div></div><div class="chart-container"><canvas id="formationSiteChart"></canvas></div></div>
+                        <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Statut de Présence</div></div></div><div class="chart-container"><canvas id="formationStatutChart"></canvas></div></div>
+                        <div class="chart-card full-width"><div class="chart-header"><div><div class="chart-title">Évolution Mensuelle</div><div class="chart-subtitle">Heures-stagiaires et actions démarrées par mois</div></div></div><div class="chart-container"><canvas id="formationEvolutionChart"></canvas></div></div>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title">Actions de Formation <span id="formationActionsCount" style="color: var(--text-muted); font-weight: 400;"></span></div>
+                            <div class="table-actions"><button class="btn-export" onclick="exportFormationActionsCSV()"><i class="fas fa-download"></i>Export CSV</button></div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table" id="formationActionsTable">
+                                <thead><tr><th>N°</th><th>Domaine</th><th>Thématique</th><th>Type</th><th>Début</th><th>Fin</th><th style="text-align:right;">Jours</th><th style="text-align:right;">Heures</th><th style="text-align:right;">Participants</th><th>Cabinet</th><th style="text-align:right;">Coût</th></tr></thead>
+                                <tbody id="formationActionsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-header">
+                            <div class="table-title">Participations <span id="formationParticipationsCount" style="color: var(--text-muted); font-weight: 400;"></span></div>
+                            <div class="table-actions"><button class="btn-export" onclick="exportFormationParticipationsCSV()"><i class="fas fa-download"></i>Export CSV</button></div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table" id="formationParticipationsTable">
+                                <thead><tr><th>Nom</th><th>Prénom</th><th>Classification</th><th>Site</th><th>Département</th><th>Thématique</th><th>Début</th><th>Statut</th></tr></thead>
+                                <tbody id="formationParticipationsTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="formationPagination"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Social -->
+            <div id="page-social" class="page">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1><i class="fas fa-handshake-angle" style="color: var(--secondary-blue); margin-right: 12px;"></i>Social</h1>
+                        <p>Bilan social : absentéisme, santé-sécurité, dialogue social, œuvres sociales</p>
+                    </div>
+                </div>
+                <div id="social-empty" class="empty-state">
+                    <i class="fas fa-file-circle-exclamation"></i>
+                    <p id="social-empty-message">Aucune donnée sociale disponible pour le moment.</p>
+                    <div class="charts-grid" style="margin-top: 32px; text-align: left;">
+                        <div class="chart-card" style="opacity: 0.55;"><div class="chart-header"><div><div class="chart-title"><i class="fas fa-calendar-xmark" style="margin-right:8px;"></i>Absentéisme</div><div class="chart-subtitle">À venir</div></div></div></div>
+                        <div class="chart-card" style="opacity: 0.55;"><div class="chart-header"><div><div class="chart-title"><i class="fas fa-truck-medical" style="margin-right:8px;"></i>Santé &amp; Sécurité (AT/MP)</div><div class="chart-subtitle">À venir</div></div></div></div>
+                        <div class="chart-card" style="opacity: 0.55;"><div class="chart-header"><div><div class="chart-title"><i class="fas fa-scale-balanced" style="margin-right:8px;"></i>Discipline</div><div class="chart-subtitle">À venir</div></div></div></div>
+                        <div class="chart-card" style="opacity: 0.55;"><div class="chart-header"><div><div class="chart-title"><i class="fas fa-people-arrows" style="margin-right:8px;"></i>Dialogue Social</div><div class="chart-subtitle">À venir</div></div></div></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let appData = null;
+        let filteredEmployees = [];
+        let currentPage = 1;
+        let msCurrentPage = 1;
+        const pageSize = 20;
+        let charts = {};
+
+        function formatNumber(num, decimals = 0) {
+            if (num === null || num === undefined) return '-';
+            return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
+        }
+
+        function formatCurrency(num) {
+            if (num === null || num === undefined) return '-';
+            return new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + ' MAD';
+        }
+
+        async function loadData() {
+            try {
+                let response = await fetch('data/data.json');
+                if (!response.ok) response = await fetch('./data/data.json');
+                appData = await response.json();
+                const moisNoms = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+                const periodeText = `${moisNoms[appData.effectif.mois_paie || 1]} ${appData.effectif.annee_paie || 2026}`;
+                document.getElementById('dataSourceInfo').innerHTML = `<strong>Période: ${periodeText}</strong><br>Mise à jour: ${new Date(appData.meta.generated_at).toLocaleString('fr-FR')}`;
+                document.getElementById('dataFileName').textContent = appData.meta.source_file;
+                initFilters();
+                renderSynthese();
+                renderEffectifs();
+                renderMasseSalariale();
+                renderMouvements();
+                renderIndicateurs();
+                renderFormation();
+                renderSocial();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('dataSourceInfo').innerHTML = '<span style="color: #EF4444;"><i class="fas fa-exclamation-triangle"></i> Erreur de chargement</span>';
+            }
+        }
+
+        function initFilters() {
+            const etbs = Object.keys(appData.effectif.par_etablissement);
+            const classes = Object.keys(appData.effectif.par_classification);
+            const contrats = Object.keys(appData.effectif.par_contrat);
+            const sections = appData.effectif.par_section ? Object.keys(appData.effectif.par_section) : [];
+            
+            // Extraire les années et mois uniques des employés
+            const annees = [...new Set(appData.employes.map(e => e.annee_paie).filter(a => a))].sort((a, b) => b - a);
+            const moisNoms = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            
+            // Filtre Année
+            ['filterAnnee', 'filterAnnee2'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.innerHTML = '<option value="">Toutes années</option>';
+                    annees.forEach(a => select.innerHTML += `<option value="${a}">${a}</option>`);
+                }
+            });
+            
+            // Filtre Mois
+            ['filterMois', 'filterMois2'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.innerHTML = '<option value="">Tous mois</option>';
+                    for (let i = 1; i <= 12; i++) {
+                        select.innerHTML += `<option value="${i}">${moisNoms[i]}</option>`;
+                    }
+                }
+            });
+            
+            // Filtre Établissement
+            ['filterEtb', 'filterEtb2'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.innerHTML = '<option value="">Tous les sites</option>';
+                    etbs.forEach(etb => select.innerHTML += `<option value="${etb}">${etb}</option>`);
+                }
+            });
+            
+            // Filtre Classification
+            ['filterClass', 'filterClass2'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.innerHTML = '<option value="">Toutes classifications</option>';
+                    classes.forEach(cls => select.innerHTML += `<option value="${cls}">${cls}</option>`);
+                }
+            });
+            
+            // Filtre Contrat
+            ['filterContrat', 'filterContrat2'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.innerHTML = '<option value="">Tous contrats</option>';
+                    contrats.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+                }
+            });
+            
+            // Filtre Section (GRADE_LIB)
+            ['filterSection', 'filterSection2'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.innerHTML = '<option value="">Toutes sections</option>';
+                    sections.sort().forEach(s => select.innerHTML += `<option value="${s}">${s}</option>`);
+                }
+            });
+            
+            console.log('Filtres initialisés:', { annees, sections: sections.length, etbs, classes, contrats });
+
+            // Filtres Formation
+            if (appData.formation) {
+                const fDomaines = Object.keys(appData.formation.par_domaine).sort();
+                const fTypes = Object.keys(appData.formation.par_type_action).sort();
+                const fSites = Object.keys(appData.formation.par_site).sort();
+                const selDomaine = document.getElementById('filterFormationDomaine');
+                selDomaine.innerHTML = '<option value="">Tous les domaines</option>';
+                fDomaines.forEach(d => selDomaine.innerHTML += `<option value="${d}">${d}</option>`);
+                const selType = document.getElementById('filterFormationType');
+                selType.innerHTML = '<option value="">Tous les types</option>';
+                fTypes.forEach(t => selType.innerHTML += `<option value="${t}">${t}</option>`);
+                const selSite = document.getElementById('filterFormationSite');
+                selSite.innerHTML = '<option value="">Tous les sites</option>';
+                fSites.forEach(s => selSite.innerHTML += `<option value="${s}">${s}</option>`);
+            }
+        }
+
+        function applyFilters() {
+            // Récupérer les valeurs des filtres (synchroniser entre les deux pages)
+            const searchTerm1 = document.getElementById('globalSearch').value || '';
+            const searchTerm2 = document.getElementById('employeeSearch').value || '';
+            const searchTerm = (searchTerm1 || searchTerm2).toLowerCase();
+            
+            // Filtres Année et Mois
+            const anneeFilter1 = document.getElementById('filterAnnee') ? document.getElementById('filterAnnee').value : '';
+            const anneeFilter2 = document.getElementById('filterAnnee2') ? document.getElementById('filterAnnee2').value : '';
+            const anneeFilter = anneeFilter1 || anneeFilter2;
+            
+            const moisFilter1 = document.getElementById('filterMois') ? document.getElementById('filterMois').value : '';
+            const moisFilter2 = document.getElementById('filterMois2') ? document.getElementById('filterMois2').value : '';
+            const moisFilter = moisFilter1 || moisFilter2;
+            
+            const etbFilter1 = document.getElementById('filterEtb').value;
+            const etbFilter2 = document.getElementById('filterEtb2').value;
+            const etbFilter = etbFilter1 || etbFilter2;
+            
+            const classFilter1 = document.getElementById('filterClass').value;
+            const classFilter2 = document.getElementById('filterClass2').value;
+            const classFilter = classFilter1 || classFilter2;
+            
+            const contratFilter1 = document.getElementById('filterContrat').value;
+            const contratFilter2 = document.getElementById('filterContrat2').value;
+            const contratFilter = contratFilter1 || contratFilter2;
+            
+            const sectionFilter1 = document.getElementById('filterSection') ? document.getElementById('filterSection').value : '';
+            const sectionFilter2 = document.getElementById('filterSection2') ? document.getElementById('filterSection2').value : '';
+            const sectionFilter = sectionFilter1 || sectionFilter2;
+            
+            // Synchroniser les filtres entre les deux pages
+            if (document.getElementById('filterAnnee')) document.getElementById('filterAnnee').value = anneeFilter;
+            if (document.getElementById('filterAnnee2')) document.getElementById('filterAnnee2').value = anneeFilter;
+            if (document.getElementById('filterMois')) document.getElementById('filterMois').value = moisFilter;
+            if (document.getElementById('filterMois2')) document.getElementById('filterMois2').value = moisFilter;
+            document.getElementById('filterEtb').value = etbFilter;
+            document.getElementById('filterEtb2').value = etbFilter;
+            document.getElementById('filterClass').value = classFilter;
+            document.getElementById('filterClass2').value = classFilter;
+            document.getElementById('filterContrat').value = contratFilter;
+            document.getElementById('filterContrat2').value = contratFilter;
+            if (document.getElementById('filterSection')) document.getElementById('filterSection').value = sectionFilter;
+            if (document.getElementById('filterSection2')) document.getElementById('filterSection2').value = sectionFilter;
+            
+            // Filtrer les employés
+            filteredEmployees = appData.employes.filter(emp => {
+                const matchSearch = !searchTerm || 
+                    emp.matricule.toLowerCase().includes(searchTerm) || 
+                    emp.nom.toLowerCase().includes(searchTerm) || 
+                    emp.prenom.toLowerCase().includes(searchTerm) || 
+                    emp.fonction.toLowerCase().includes(searchTerm) ||
+                    (emp.section && emp.section.toLowerCase().includes(searchTerm));
+                const matchAnnee = !anneeFilter || emp.annee_paie == anneeFilter;
+                const matchMois = !moisFilter || emp.mois_paie == moisFilter;
+                const matchEtb = !etbFilter || emp.etablissement === etbFilter;
+                const matchClass = !classFilter || emp.classification === classFilter;
+                const matchContrat = !contratFilter || emp.type_contrat === contratFilter;
+                const matchSection = !sectionFilter || emp.section === sectionFilter;
+                return matchSearch && matchAnnee && matchMois && matchEtb && matchClass && matchContrat && matchSection;
+            });
+            currentPage = 1;
+            
+            // Mettre à jour les KPIs et graphiques avec les données filtrées
+            updateFilteredKPIs(etbFilter, classFilter, contratFilter, sectionFilter);
+            renderEmployeeTable();
+            updateFilteredStats();
+        }
+
+        function updateFilteredKPIs(etbFilter, classFilter, contratFilter, sectionFilter) {
+            // Calculer les stats sur les données filtrées
+            const filtered = filteredEmployees;
+            const total = filtered.length;
+            const hommes = filtered.filter(e => e.sexe === 'Homme').length;
+            const femmes = filtered.filter(e => e.sexe === 'Femme').length;
+            const ageMoyen = total > 0 ? (filtered.reduce((s, e) => s + e.age, 0) / total).toFixed(1) : 0;
+            const ancMoyenne = total > 0 ? (filtered.reduce((s, e) => s + e.anciennete, 0) / total).toFixed(1) : 0;
+            const cdi = filtered.filter(e => e.type_contrat === 'CDI').length;
+            const cio = filtered.filter(e => e.type_contrat === 'CIO').length;
+            
+            // Calcul de la MS filtrée si filtre établissement actif
+            let msFiltered = appData.masse_salariale.montant_mois_courant;
+            if (etbFilter) {
+                const msEtb = appData.masse_salariale.par_etablissement;
+                msFiltered = msEtb[etbFilter] || msEtb[etbFilter.replace('è', 'é')] || 0;
+            }
+            
+            // Mettre à jour les KPIs de la page Synthèse
+            const mvt = appData.mouvements;
+            const ind = appData.indicateurs;
+            const taux_fem = total > 0 ? ((femmes / total) * 100).toFixed(1) : 0;
+            
+            document.getElementById('synthese-kpis').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-users"></i></div><div class="kpi-label">Effectif Total (FTE)</div><div class="kpi-value">${formatNumber(total)}</div><div class="kpi-trend ${etbFilter || classFilter || contratFilter ? 'info' : 'up'}"><i class="fas fa-${etbFilter || classFilter || contratFilter ? 'filter' : 'arrow-up'}"></i> ${etbFilter || classFilter || contratFilter ? 'Filtré' : '+' + mvt.solde + ' ce mois'}</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-venus-mars"></i></div><div class="kpi-label">Taux de Féminisation</div><div class="kpi-value">${taux_fem}<span class="kpi-unit">%</span></div><div class="kpi-trend">${femmes} femmes / ${hommes} hommes</div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-birthday-cake"></i></div><div class="kpi-label">Âge Moyen</div><div class="kpi-value">${ageMoyen}<span class="kpi-unit">ans</span></div><div class="kpi-trend">Sur ${total} collaborateurs</div></div>
+                <div class="kpi-card teal"><div class="kpi-icon teal"><i class="fas fa-clock"></i></div><div class="kpi-label">Ancienneté Moyenne</div><div class="kpi-value">${ancMoyenne}<span class="kpi-unit">ans</span></div><div class="kpi-trend">Sur ${total} collaborateurs</div></div>
+                <div class="kpi-card purple"><div class="kpi-icon purple"><i class="fas fa-coins"></i></div><div class="kpi-label">Masse Salariale</div><div class="kpi-value">${formatNumber(msFiltered / 1000000, 2)}<span class="kpi-unit">M MAD</span></div><div class="kpi-trend">${etbFilter ? etbFilter : 'Tous sites'}</div></div>
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-user-plus"></i></div><div class="kpi-label">Recrutements</div><div class="kpi-value">${mvt.nb_recrutements}</div><div class="kpi-trend up"><i class="fas fa-circle"></i> Ce mois</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-user-minus"></i></div><div class="kpi-label">Départs</div><div class="kpi-value">${mvt.nb_departs}</div><div class="kpi-trend down"><i class="fas fa-circle"></i> Ce mois</div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-rotate"></i></div><div class="kpi-label">Turnover</div><div class="kpi-value">${ind.turnover}<span class="kpi-unit">%</span></div><div class="kpi-trend">Taux de rotation</div></div>`;
+            
+            // Mettre à jour les KPIs de la page Effectifs
+            const tauxCdi = total > 0 ? ((cdi / total) * 100).toFixed(1) : 0;
+            document.getElementById('effectifs-stats').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-users"></i></div><div class="kpi-label">Effectif Total</div><div class="kpi-value">${formatNumber(total)}</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-file-contract"></i></div><div class="kpi-label">CDI</div><div class="kpi-value">${formatNumber(cdi)}</div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-file-signature"></i></div><div class="kpi-label">CIO</div><div class="kpi-value">${formatNumber(cio)}</div></div>
+                <div class="kpi-card teal"><div class="kpi-icon teal"><i class="fas fa-percentage"></i></div><div class="kpi-label">Taux CDI</div><div class="kpi-value">${tauxCdi}<span class="kpi-unit">%</span></div></div>`;
+            
+            // Mettre à jour les graphiques avec les données filtrées
+            updateFilteredCharts(filtered);
+        }
+
+        function updateFilteredCharts(filtered) {
+            // Pyramide des âges filtrée
+            const ageLabels = ['<25', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60+'];
+            const ageBins = [0, 25, 30, 35, 40, 45, 50, 55, 60, 100];
+            const hommesData = new Array(ageLabels.length).fill(0);
+            const femmesData = new Array(ageLabels.length).fill(0);
+            
+            filtered.forEach(emp => {
+                const binIndex = ageBins.findIndex((bin, i) => emp.age >= bin && emp.age < (ageBins[i+1] || 100)) - 1;
+                if (binIndex >= 0 && binIndex < ageLabels.length) {
+                    if (emp.sexe === 'Homme') hommesData[binIndex]++;
+                    else femmesData[binIndex]++;
+                }
+            });
+            
+            if (charts.pyramideAge) {
+                charts.pyramideAge.data.datasets[0].data = hommesData.map(v => -v);
+                charts.pyramideAge.data.datasets[1].data = femmesData;
+                charts.pyramideAge.update();
+            }
+            
+            // Pyramide ancienneté filtrée
+            const ancLabels = ['<2', '2-4', '5-9', '10-14', '15-19', '20-24', '25-29', '30+'];
+            const ancBins = [0, 2, 5, 10, 15, 20, 25, 30, 100];
+            const ancData = new Array(ancLabels.length).fill(0);
+            
+            filtered.forEach(emp => {
+                const binIndex = ancBins.findIndex((bin, i) => emp.anciennete >= bin && emp.anciennete < (ancBins[i+1] || 100)) - 1;
+                if (binIndex >= 0 && binIndex < ancLabels.length) {
+                    ancData[binIndex]++;
+                }
+            });
+            
+            if (charts.pyramideAnc) {
+                charts.pyramideAnc.data.datasets[0].data = ancData;
+                charts.pyramideAnc.update();
+            }
+            
+            // Classification filtrée
+            const classData = {};
+            filtered.forEach(emp => {
+                classData[emp.classification] = (classData[emp.classification] || 0) + 1;
+            });
+            
+            if (charts.classification) {
+                charts.classification.data.labels = Object.keys(classData);
+                charts.classification.data.datasets[0].data = Object.values(classData);
+                charts.classification.update();
+            }
+            
+            // Établissement filtré
+            const etbData = {};
+            filtered.forEach(emp => {
+                etbData[emp.etablissement] = (etbData[emp.etablissement] || 0) + 1;
+            });
+            
+            if (charts.etablissement) {
+                charts.etablissement.data.labels = Object.keys(etbData);
+                charts.etablissement.data.datasets[0].data = Object.values(etbData);
+                charts.etablissement.update();
+            }
+            
+            // Charts page Effectifs
+            if (charts.effectifEtb) {
+                charts.effectifEtb.data.labels = Object.keys(etbData);
+                charts.effectifEtb.data.datasets[0].data = Object.values(etbData);
+                charts.effectifEtb.update();
+            }
+            
+            if (charts.effectifClass) {
+                charts.effectifClass.data.labels = Object.keys(classData);
+                charts.effectifClass.data.datasets[0].data = Object.values(classData);
+                charts.effectifClass.update();
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('globalSearch').value = '';
+            document.getElementById('employeeSearch').value = '';
+            if (document.getElementById('filterAnnee')) document.getElementById('filterAnnee').value = '';
+            if (document.getElementById('filterAnnee2')) document.getElementById('filterAnnee2').value = '';
+            if (document.getElementById('filterMois')) document.getElementById('filterMois').value = '';
+            if (document.getElementById('filterMois2')) document.getElementById('filterMois2').value = '';
+            document.getElementById('filterEtb').value = '';
+            document.getElementById('filterEtb2').value = '';
+            document.getElementById('filterClass').value = '';
+            document.getElementById('filterClass2').value = '';
+            document.getElementById('filterContrat').value = '';
+            document.getElementById('filterContrat2').value = '';
+            if (document.getElementById('filterSection')) document.getElementById('filterSection').value = '';
+            if (document.getElementById('filterSection2')) document.getElementById('filterSection2').value = '';
+            filteredEmployees = [...appData.employes];
+            currentPage = 1;
+            
+            // Restaurer les KPIs et graphiques originaux
+            renderSynthese();
+            renderEffectifs();
+        }
+
+        function updateFilteredStats() {
+            document.getElementById('employeeCount').textContent = `(${filteredEmployees.length} résultats)`;
+        }
+
+        function renderSynthese() {
+            const eff = appData.effectif, ms = appData.masse_salariale, mvt = appData.mouvements, ind = appData.indicateurs;
+            const moisNoms = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            const periodeText = `${moisNoms[eff.mois_paie || 1]} ${eff.annee_paie || 2026}`;
+            const sortantsCount = eff.sortants_cheque || 0;
+            
+            document.getElementById('synthese-kpis').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-users"></i></div><div class="kpi-label">Effectif Actif (FTE)</div><div class="kpi-value">${formatNumber(eff.total_fte)}</div><div class="kpi-trend up"><i class="fas fa-calendar"></i> ${periodeText}</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-venus-mars"></i></div><div class="kpi-label">Taux de Féminisation</div><div class="kpi-value">${ind.taux_feminisation}<span class="kpi-unit">%</span></div><div class="kpi-trend">${eff.femmes} femmes / ${eff.hommes} hommes</div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-birthday-cake"></i></div><div class="kpi-label">Âge Moyen</div><div class="kpi-value">${eff.age_moyen}<span class="kpi-unit">ans</span></div><div class="kpi-trend">Min: ${eff.age_min} - Max: ${eff.age_max}</div></div>
+                <div class="kpi-card teal"><div class="kpi-icon teal"><i class="fas fa-clock"></i></div><div class="kpi-label">Ancienneté Moyenne</div><div class="kpi-value">${eff.anciennete_moyenne}<span class="kpi-unit">ans</span></div><div class="kpi-trend">Min: ${eff.anciennete_min} - Max: ${eff.anciennete_max}</div></div>
+                <div class="kpi-card purple"><div class="kpi-icon purple"><i class="fas fa-coins"></i></div><div class="kpi-label">Masse Salariale YTD</div><div class="kpi-value">${formatNumber(ms.ytd / 1000000, 2)}<span class="kpi-unit">M MAD</span></div><div class="kpi-trend">${ms.mois_courant}: ${formatNumber(ms.montant_mois_courant / 1000000, 2)}M</div></div>
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-user-plus"></i></div><div class="kpi-label">Recrutements</div><div class="kpi-value">${mvt.nb_recrutements}</div><div class="kpi-trend up"><i class="fas fa-circle"></i> Ce mois</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-user-minus"></i></div><div class="kpi-label">Départs</div><div class="kpi-value">${mvt.nb_departs}</div><div class="kpi-trend down"><i class="fas fa-circle"></i> Ce mois</div></div>
+                <div class="kpi-card ${sortantsCount > 0 ? '' : 'green'}"><div class="kpi-icon ${sortantsCount > 0 ? 'blue' : 'green'}"><i class="fas fa-${sortantsCount > 0 ? 'user-clock' : 'check-circle'}"></i></div><div class="kpi-label">Sortants (Chèque)</div><div class="kpi-value">${sortantsCount}</div><div class="kpi-trend ${sortantsCount > 0 ? 'down' : ''}"><i class="fas fa-${sortantsCount > 0 ? 'exclamation-circle' : 'check'}"></i> ${sortantsCount > 0 ? 'Exclus du FTE' : 'Aucun'}</div></div>`;
+            renderPyramideAge();
+            renderPyramideAnciennete();
+            renderClassificationChart();
+            renderEtablissementChart();
+            renderSectionChart();
+        }
+
+        function renderSectionChart() {
+            const ctx = document.getElementById('sectionChart');
+            if (!ctx) { console.log('Canvas sectionChart non trouvé'); return; }
+            const data = appData.effectif.par_section || {};
+            console.log('Données sections:', data, 'Nombre:', Object.keys(data).length);
+            if (Object.keys(data).length === 0) {
+                console.warn('Aucune donnée de section - vérifiez que les données ont été régénérées');
+                return;
+            }
+            if (charts.section) charts.section.destroy();
+            const colors = ['#FF6B35', '#1E3A5F', '#00B4A0', '#6B5BFF', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#84CC16', '#F97316', '#14B8A6', '#A855F7', '#3B82F6', '#10B981', '#F43F5E', '#8B5CF6', '#0EA5E9', '#D946EF'];
+            const sortedKeys = Object.keys(data).sort((a, b) => data[b].count - data[a].count);
+            charts.section = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: { 
+                    labels: sortedKeys, 
+                    datasets: [{ 
+                        label: 'Effectif', 
+                        data: sortedKeys.map(k => data[k].count), 
+                        backgroundColor: colors.slice(0, sortedKeys.length), 
+                        borderRadius: 6 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const section = sortedKeys[context.dataIndex];
+                                    const info = data[section];
+                                    return `Âge moy: ${info.age_moyen} ans\nAnc. moy: ${info.anciennete_moyenne} ans`;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        y: { beginAtZero: true, title: { display: true, text: 'Effectif' } },
+                        x: { ticks: { maxRotation: 45, minRotation: 45 } }
+                    } 
+                }
+            });
+        }
+
+        function renderPyramideAge() {
+            const ctx = document.getElementById('pyramideAgeChart').getContext('2d');
+            const data = appData.effectif.pyramide_age;
+            if (charts.pyramideAge) charts.pyramideAge.destroy();
+            charts.pyramideAge = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: data.labels, datasets: [{ label: 'Hommes', data: data.hommes.map(v => -v), backgroundColor: '#1E3A5F', borderRadius: 4 }, { label: 'Femmes', data: data.femmes, backgroundColor: '#FF6B35', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${Math.abs(ctx.raw)}` } } }, scales: { x: { stacked: true, ticks: { callback: (value) => Math.abs(value) } }, y: { stacked: true } } }
+            });
+        }
+
+        function renderPyramideAnciennete() {
+            const ctx = document.getElementById('pyramideAncienneteChart').getContext('2d');
+            const data = appData.effectif.pyramide_anciennete;
+            if (charts.pyramideAnc) charts.pyramideAnc.destroy();
+            charts.pyramideAnc = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: data.labels, datasets: [{ label: 'Collaborateurs', data: data.values, backgroundColor: '#00B4A0', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderClassificationChart() {
+            const ctx = document.getElementById('classificationChart').getContext('2d');
+            const data = appData.effectif.par_classification;
+            if (charts.classification) charts.classification.destroy();
+            charts.classification = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: Object.keys(data), datasets: [{ data: Object.values(data).map(d => d.count), backgroundColor: ['#FF6B35', '#1E3A5F', '#00B4A0'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function renderEtablissementChart() {
+            const ctx = document.getElementById('etablissementChart').getContext('2d');
+            const data = appData.effectif.par_etablissement;
+            if (charts.etablissement) charts.etablissement.destroy();
+            charts.etablissement = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: Object.keys(data), datasets: [{ data: Object.values(data).map(d => d.count), backgroundColor: ['#6B5BFF', '#22C55E', '#F59E0B'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function renderEffectifs() {
+            const eff = appData.effectif, ind = appData.indicateurs;
+            document.getElementById('effectifs-stats').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-users"></i></div><div class="kpi-label">Effectif Total</div><div class="kpi-value">${formatNumber(eff.total_fte)}</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-file-contract"></i></div><div class="kpi-label">CDI</div><div class="kpi-value">${formatNumber(eff.par_contrat.CDI || 0)}</div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-file-signature"></i></div><div class="kpi-label">CIO</div><div class="kpi-value">${formatNumber(eff.par_contrat.CIO || 0)}</div></div>
+                <div class="kpi-card teal"><div class="kpi-icon teal"><i class="fas fa-percentage"></i></div><div class="kpi-label">Taux CDI</div><div class="kpi-value">${ind.taux_cdi}<span class="kpi-unit">%</span></div></div>`;
+            renderEffectifEtbChart();
+            renderEffectifClassChart();
+            renderEffectifSectionChart();
+            filteredEmployees = [...appData.employes];
+            renderEmployeeTable();
+        }
+
+        function renderEffectifSectionChart() {
+            const ctx = document.getElementById('effectifSectionChart');
+            if (!ctx) { console.log('Canvas effectifSectionChart non trouvé'); return; }
+            const data = appData.effectif.par_section || {};
+            console.log('Données sections (Effectifs):', Object.keys(data).length, 'sections');
+            if (Object.keys(data).length === 0) {
+                console.warn('Aucune donnée de section pour le graphique Effectifs');
+                return;
+            }
+            if (charts.effectifSection) charts.effectifSection.destroy();
+            const colors = ['#FF6B35', '#1E3A5F', '#00B4A0', '#6B5BFF', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#84CC16', '#F97316', '#14B8A6', '#A855F7', '#3B82F6', '#10B981', '#F43F5E', '#8B5CF6', '#0EA5E9', '#D946EF'];
+            const sortedKeys = Object.keys(data).sort((a, b) => data[b].count - data[a].count);
+            charts.effectifSection = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: { 
+                    labels: sortedKeys, 
+                    datasets: [{ 
+                        label: 'Effectif', 
+                        data: sortedKeys.map(k => data[k].count), 
+                        backgroundColor: colors.slice(0, sortedKeys.length), 
+                        borderRadius: 6 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const section = sortedKeys[context.dataIndex];
+                                    const info = data[section];
+                                    return `Âge moy: ${info.age_moyen} ans\nAnc. moy: ${info.anciennete_moyenne} ans`;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        y: { beginAtZero: true, title: { display: true, text: 'Effectif' } },
+                        x: { ticks: { maxRotation: 45, minRotation: 45 } }
+                    } 
+                }
+            });
+        }
+
+        function renderEffectifEtbChart() {
+            const ctx = document.getElementById('effectifEtbChart').getContext('2d');
+            const data = appData.effectif.par_etablissement;
+            if (charts.effectifEtb) charts.effectifEtb.destroy();
+            charts.effectifEtb = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(data), datasets: [{ label: 'Effectif', data: Object.values(data).map(d => d.count), backgroundColor: ['#6B5BFF', '#22C55E', '#F59E0B'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        }
+
+        function renderEffectifClassChart() {
+            const ctx = document.getElementById('effectifClassChart').getContext('2d');
+            const data = appData.effectif.par_classification;
+            if (charts.effectifClass) charts.effectifClass.destroy();
+            charts.effectifClass = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(data), datasets: [{ label: 'Effectif', data: Object.values(data).map(d => d.count), backgroundColor: ['#FF6B35', '#1E3A5F', '#00B4A0'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        }
+
+        function renderEmployeeTable() {
+            const start = (currentPage - 1) * pageSize, end = start + pageSize;
+            const pageData = filteredEmployees.slice(start, end);
+            let html = '';
+            pageData.forEach(emp => {
+                const contratBadge = emp.type_contrat === 'CDI' ? '<span class="badge success">CDI</span>' : '<span class="badge info">CIO</span>';
+                // Calculer la date de fin prévisionnelle pour les CIO (18 mois après l'embauche)
+                let dateFinPrev = '-';
+                if (emp.type_contrat === 'CIO' && emp.date_embauche) {
+                    const dateEmb = new Date(emp.date_embauche);
+                    const dateFin = new Date(dateEmb);
+                    dateFin.setMonth(dateFin.getMonth() + 18);
+                    dateFinPrev = dateFin.toLocaleDateString('fr-FR');
+                }
+                const sectionBadge = emp.section ? `<span class="badge neutral" style="font-size: 10px;">${emp.section}</span>` : '-';
+                html += `<tr><td><strong>${emp.matricule}</strong></td><td>${emp.nom}</td><td>${emp.prenom}</td><td>${emp.etablissement}</td><td>${sectionBadge}</td><td><span class="badge neutral">${emp.classification}</span></td><td>${emp.fonction}</td><td>${emp.age}</td><td>${emp.anciennete}</td><td>${contratBadge}</td><td>${dateFinPrev}</td></tr>`;
+            });
+            document.getElementById('employeeTableBody').innerHTML = html || '<tr><td colspan="11" class="empty-state">Aucun résultat</td></tr>';
+            renderPagination('employeePagination', filteredEmployees.length, currentPage, (page) => { currentPage = page; renderEmployeeTable(); });
+            updateFilteredStats();
+        }
+
+        function renderPagination(containerId, totalItems, currentPage, onPageChange) {
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const container = document.getElementById(containerId);
+            let html = `<div class="pagination-info">Affichage ${(currentPage-1)*pageSize + 1}-${Math.min(currentPage*pageSize, totalItems)} sur ${totalItems}</div><div class="pagination-buttons">`;
+            html += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage('${containerId}', ${currentPage - 1})"><i class="fas fa-chevron-left"></i></button>`;
+            for (let i = 1; i <= totalPages && i <= 5; i++) html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage('${containerId}', ${i})">${i}</button>`;
+            if (totalPages > 5) html += `<span style="padding: 8px;">...</span><button class="pagination-btn ${totalPages === currentPage ? 'active' : ''}" onclick="changePage('${containerId}', ${totalPages})">${totalPages}</button>`;
+            html += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage('${containerId}', ${currentPage + 1})"><i class="fas fa-chevron-right"></i></button></div>`;
+            container.innerHTML = html;
+        }
+
+        function changePage(containerId, page) {
+            if (containerId === 'employeePagination') { currentPage = page; renderEmployeeTable(); }
+            else if (containerId === 'msPagination') { msCurrentPage = page; renderMsDetailTable(); }
+            else if (containerId === 'formationPagination') { formationCurrentPage = page; renderFormationParticipationsTable(); }
+        }
+
+        function exportCSV() {
+            const headers = ['Matricule', 'Nom', 'Prénom', 'Établissement', 'Section', 'Classification', 'Fonction', 'Âge', 'Ancienneté', 'Contrat', 'Sexe', 'Date Embauche', 'Date Fin Prév.'];
+            let csv = headers.join(';') + '\n';
+            filteredEmployees.forEach(emp => {
+                // Calculer la date de fin prévisionnelle pour les CIO
+                let dateFinPrev = '';
+                if (emp.type_contrat === 'CIO' && emp.date_embauche) {
+                    const dateEmb = new Date(emp.date_embauche);
+                    const dateFin = new Date(dateEmb);
+                    dateFin.setMonth(dateFin.getMonth() + 18);
+                    dateFinPrev = dateFin.toLocaleDateString('fr-FR');
+                }
+                csv += [emp.matricule, emp.nom, emp.prenom, emp.etablissement, emp.section || '', emp.classification, emp.fonction, emp.age, emp.anciennete, emp.type_contrat, emp.sexe, emp.date_embauche || '', dateFinPrev].join(';') + '\n';
+            });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `effectifs_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function exportMsDetailCSV() {
+            const detail = appData.masse_salariale.detail;
+            const headers = ['Compte', 'Intitulé', 'Établissement', 'Classification', 'Montant'];
+            let csv = headers.join(';') + '\n';
+            detail.forEach(row => {
+                csv += [row.compte, row.intitule, row.etablissement, row.classification, row.montant].join(';') + '\n';
+            });
+            // Ajouter le total
+            const total = detail.reduce((sum, row) => sum + row.montant, 0);
+            csv += ['', 'TOTAL', '', '', total].join(';') + '\n';
+            
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `masse_salariale_detail_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function renderMasseSalariale() {
+            const ms = appData.masse_salariale, ind = appData.indicateurs;
+            const budgetAnnuel = 245; // Budget annuel fixé à 245 MDHS
+            const tauxRealisation = (ms.ytd / (budgetAnnuel * 1000000)) * 100;
+            document.getElementById('ms-kpis').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-chart-line"></i></div><div class="kpi-label">Masse Salariale YTD</div><div class="kpi-value">${formatNumber(ms.ytd / 1000000, 2)}<span class="kpi-unit">M MAD</span></div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-calendar-day"></i></div><div class="kpi-label">${ms.mois_courant}</div><div class="kpi-value">${formatNumber(ms.montant_mois_courant / 1000000, 2)}<span class="kpi-unit">M MAD</span></div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-user-dollar"></i></div><div class="kpi-label">Coût par ETP</div><div class="kpi-value">${formatNumber(ind.cout_par_etp / 1000, 1)}<span class="kpi-unit">K MAD</span></div></div>
+                <div class="kpi-card teal"><div class="kpi-icon teal"><i class="fas fa-calculator"></i></div><div class="kpi-label">Budget Annuel</div><div class="kpi-value">${budgetAnnuel}<span class="kpi-unit">M MAD</span></div><div class="kpi-trend">Réalisation: ${formatNumber(tauxRealisation, 1)}%</div></div>`;
+            renderMsEtbChart();
+            renderMsClassChart();
+            renderMsEvolutionChart();
+            renderMsDetailTable();
+        }
+
+        function renderMsEtbChart() {
+            const ctx = document.getElementById('msEtbChart').getContext('2d');
+            const data = appData.masse_salariale.par_etablissement;
+            if (charts.msEtb) charts.msEtb.destroy();
+            charts.msEtb = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: ['#6B5BFF', '#22C55E', '#F59E0B'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatNumber(ctx.raw / 1000000, 2)}M MAD` } } } } });
+        }
+
+        function renderMsClassChart() {
+            const ctx = document.getElementById('msClassChart').getContext('2d');
+            const data = appData.masse_salariale.par_classification;
+            if (charts.msClass) charts.msClass.destroy();
+            charts.msClass = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: ['#FF6B35', '#1E3A5F', '#00B4A0'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatNumber(ctx.raw / 1000000, 2)}M MAD` } } } } });
+        }
+
+        function renderMsEvolutionChart() {
+            const ctx = document.getElementById('msEvolutionChart').getContext('2d');
+            const data = appData.masse_salariale.totaux_mois;
+            if (charts.msEvolution) charts.msEvolution.destroy();
+            charts.msEvolution = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(data), datasets: [{ label: 'Masse Salariale', data: Object.values(data), backgroundColor: '#FF6B35', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${formatNumber(ctx.raw / 1000000, 2)}M MAD` } } }, scales: { y: { ticks: { callback: (value) => formatNumber(value / 1000000, 1) + 'M' } } } } });
+        }
+
+        function renderMsDetailTable() {
+            const detail = appData.masse_salariale.detail;
+            const start = (msCurrentPage - 1) * pageSize, end = start + pageSize;
+            const pageData = detail.slice(start, end);
+            let html = '';
+            pageData.forEach(row => html += `<tr><td><code>${row.compte}</code></td><td>${row.intitule}</td><td>${row.etablissement}</td><td><span class="badge neutral">${row.classification}</span></td><td style="text-align: right; font-weight: 600;">${formatCurrency(row.montant)}</td></tr>`);
+            document.getElementById('msDetailTableBody').innerHTML = html || '<tr><td colspan="5" class="empty-state">Aucune donnée</td></tr>';
+            renderPagination('msPagination', detail.length, msCurrentPage, (page) => { msCurrentPage = page; renderMsDetailTable(); });
+        }
+
+        function renderMouvements() {
+            const mvt = appData.mouvements, ind = appData.indicateurs;
+            // Initialiser les données filtrées
+            filteredRecrutements = [...mvt.recrutements];
+            filteredDeparts = [...mvt.departs];
+            document.getElementById('mvt-indicators').innerHTML = `
+                <div class="indicator-card"><div class="indicator-value neutral">${ind.turnover}%</div><div class="indicator-label">Turnover</div><div class="indicator-desc">(Rec + Dep) / 2 / FTE base</div></div>
+                <div class="indicator-card"><div class="indicator-value negative">${ind.taux_demission}%</div><div class="indicator-label">Taux de Démission</div><div class="indicator-desc">Démissions / FTE base</div></div>
+                <div class="indicator-card"><div class="indicator-value ${mvt.solde >= 0 ? 'positive' : 'negative'}">${mvt.solde >= 0 ? '+' : ''}${mvt.solde}</div><div class="indicator-label">Solde Net</div><div class="indicator-desc">Recrutements - Départs</div></div>
+                <div class="indicator-card"><div class="indicator-value positive">${ind.taux_retention}%</div><div class="indicator-label">Taux de Rétention</div><div class="indicator-desc">100% - Taux de départ</div></div>
+                <div class="indicator-card"><div class="indicator-value ${ind.taux_reussite_essai >= 90 ? 'positive' : 'neutral'}">${ind.taux_reussite_essai}%</div><div class="indicator-label">Réussite Période Essai</div><div class="indicator-desc">Recrutements validés</div></div>
+                <div class="indicator-card"><div class="indicator-value ${ind.taux_croissance >= 0 ? 'positive' : 'negative'}">${ind.taux_croissance >= 0 ? '+' : ''}${ind.taux_croissance}%</div><div class="indicator-label">Taux d'Évolution</div><div class="indicator-desc">Solde / FTE base</div></div>`;
+            renderRecrutementsSiteChart();
+            renderDepartsMotifChart();
+            renderRecrutementsTable();
+            renderDepartsTable();
+        }
+
+        function renderRecrutementsSiteChart() {
+            const ctx = document.getElementById('recrutementsSiteChart').getContext('2d');
+            const data = appData.mouvements.recrutements_par_site;
+            if (charts.recSite) charts.recSite.destroy();
+            charts.recSite = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(data), datasets: [{ label: 'Recrutements', data: Object.values(data), backgroundColor: '#22C55E', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        }
+
+        function renderDepartsMotifChart() {
+            const ctx = document.getElementById('departsMotifChart').getContext('2d');
+            const data = appData.mouvements.par_motif;
+            if (charts.depMotif) charts.depMotif.destroy();
+            charts.depMotif = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: ['#EF4444', '#F59E0B', '#6B5BFF', '#00B4A0'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        }
+
+        // Variables pour les filtres des mouvements
+        let filteredRecrutements = [];
+        let filteredDeparts = [];
+
+        function filterMouvements() {
+            const searchTerm = (document.getElementById('mvtSearch').value || '').toLowerCase();
+            const moisFilter = document.getElementById('filterMoisMvt').value;
+            
+            // Filtrer les recrutements
+            filteredRecrutements = appData.mouvements.recrutements.filter(rec => {
+                const matchSearch = !searchTerm || 
+                    rec.matricule.toLowerCase().includes(searchTerm) || 
+                    rec.nom.toLowerCase().includes(searchTerm) || 
+                    rec.prenom.toLowerCase().includes(searchTerm);
+                const matchMois = !moisFilter || (rec.date && rec.date.substring(5, 7) === moisFilter);
+                return matchSearch && matchMois;
+            });
+            
+            // Filtrer les départs
+            filteredDeparts = appData.mouvements.departs.filter(dep => {
+                const matchSearch = !searchTerm || 
+                    dep.matricule.toLowerCase().includes(searchTerm) || 
+                    dep.nom.toLowerCase().includes(searchTerm) || 
+                    dep.prenom.toLowerCase().includes(searchTerm);
+                const matchMois = !moisFilter || (dep.date && dep.date.substring(5, 7) === moisFilter);
+                return matchSearch && matchMois;
+            });
+            
+            renderRecrutementsTable();
+            renderDepartsTable();
+        }
+
+        function resetMvtFilters() {
+            document.getElementById('mvtSearch').value = '';
+            document.getElementById('filterMoisMvt').value = '';
+            filteredRecrutements = [...appData.mouvements.recrutements];
+            filteredDeparts = [...appData.mouvements.departs];
+            renderRecrutementsTable();
+            renderDepartsTable();
+        }
+
+        function renderRecrutementsTable() {
+            const data = filteredRecrutements.length > 0 || document.getElementById('mvtSearch').value || document.getElementById('filterMoisMvt').value 
+                ? filteredRecrutements 
+                : appData.mouvements.recrutements;
+            let html = '';
+            data.forEach(rec => {
+                const dateFormatted = rec.date ? new Date(rec.date).toLocaleDateString('fr-FR') : '-';
+                html += `<tr><td><strong>${rec.matricule}</strong></td><td>${rec.nom} ${rec.prenom}</td><td>${rec.site}</td><td><span class="badge neutral">${rec.college || '-'}</span></td><td>${dateFormatted}</td></tr>`;
+            });
+            document.getElementById('recrutementsTableBody').innerHTML = html || '<tr><td colspan="5" class="empty-state">Aucun recrutement</td></tr>';
+            document.getElementById('recCount').textContent = `(${data.length})`;
+        }
+
+        function renderDepartsTable() {
+            const data = filteredDeparts.length > 0 || document.getElementById('mvtSearch').value || document.getElementById('filterMoisMvt').value 
+                ? filteredDeparts 
+                : appData.mouvements.departs;
+            let html = '';
+            data.forEach(dep => {
+                const dateFormatted = dep.date ? new Date(dep.date).toLocaleDateString('fr-FR') : '-';
+                let badgeClass = 'warning';
+                if (dep.motif.toLowerCase().includes('démission')) badgeClass = 'warning';
+                else if (dep.motif.toLowerCase().includes('décès')) badgeClass = 'danger';
+                else if (dep.motif.toLowerCase().includes('essai')) badgeClass = 'info';
+                html += `<tr><td><strong>${dep.matricule}</strong></td><td>${dep.nom} ${dep.prenom}</td><td>${dep.site}</td><td>${dateFormatted}</td><td><span class="badge ${badgeClass}">${dep.motif}</span></td></tr>`;
+            });
+            document.getElementById('departsTableBody').innerHTML = html || '<tr><td colspan="5" class="empty-state">Aucun départ</td></tr>';
+            document.getElementById('depCount').textContent = `(${data.length})`;
+        }
+
+        function exportRecrutementsCSV() {
+            const data = filteredRecrutements.length > 0 ? filteredRecrutements : appData.mouvements.recrutements;
+            const headers = ['Matricule', 'Nom', 'Prénom', 'Site', 'Collège', 'Date Recrutement', 'Fonction'];
+            let csv = headers.join(';') + '\n';
+            data.forEach(rec => {
+                csv += [rec.matricule, rec.nom, rec.prenom, rec.site, rec.college, rec.date || '', rec.fonction || ''].join(';') + '\n';
+            });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `recrutements_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function exportDepartsCSV() {
+            const data = filteredDeparts.length > 0 ? filteredDeparts : appData.mouvements.departs;
+            const headers = ['Matricule', 'Nom', 'Prénom', 'Site', 'Collège', 'Date Départ', 'Motif'];
+            let csv = headers.join(';') + '\n';
+            data.forEach(dep => {
+                csv += [dep.matricule, dep.nom, dep.prenom, dep.site, dep.college, dep.date || '', dep.motif].join(';') + '\n';
+            });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `departs_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function renderIndicateurs() {
+            const ind = appData.indicateurs, eff = appData.effectif, ms = appData.masse_salariale;
+            document.getElementById('rotation-indicators').innerHTML = `
+                <div class="indicator-card"><div class="indicator-value neutral">${ind.turnover}%</div><div class="indicator-label">Turnover</div><div class="indicator-desc">(Rec + Dép) / 2 / FTE base × 100</div></div>
+                <div class="indicator-card"><div class="indicator-value negative">${ind.taux_demission}%</div><div class="indicator-label">Taux de Démission</div><div class="indicator-desc">Nb démissions / FTE base × 100</div></div>
+                <div class="indicator-card"><div class="indicator-value positive">${ind.taux_retention}%</div><div class="indicator-label">Taux de Rétention</div><div class="indicator-desc">100% - Taux de départ</div></div>
+                <div class="indicator-card"><div class="indicator-value ${ind.taux_croissance >= 0 ? 'positive' : 'negative'}">${ind.taux_croissance >= 0 ? '+' : ''}${ind.taux_croissance}%</div><div class="indicator-label">Taux d'Évolution</div><div class="indicator-desc">Solde net / FTE base × 100</div></div>
+                <div class="indicator-card"><div class="indicator-value ${ind.taux_reussite_essai >= 90 ? 'positive' : 'neutral'}">${ind.taux_reussite_essai}%</div><div class="indicator-label">Réussite Période Essai</div><div class="indicator-desc">% recrutements validés</div></div>`;
+            document.getElementById('demo-indicators').innerHTML = `
+                <div class="indicator-card"><div class="indicator-value neutral">${ind.taux_feminisation}%</div><div class="indicator-label">Taux de Féminisation</div><div class="indicator-desc">${eff.femmes} femmes / ${eff.total_fte} total</div></div>
+                <div class="indicator-card"><div class="indicator-value neutral">${eff.age_moyen}</div><div class="indicator-label">Âge Moyen (ans)</div><div class="indicator-desc">Min: ${eff.age_min} - Max: ${eff.age_max}</div></div>
+                <div class="indicator-card"><div class="indicator-value neutral">${ind.indice_jeunesse}%</div><div class="indicator-label">Indice de Jeunesse</div><div class="indicator-desc">% collaborateurs < 35 ans</div></div>
+                <div class="indicator-card"><div class="indicator-value ${ind.indice_vieillissement > 25 ? 'negative' : 'neutral'}">${ind.indice_vieillissement}%</div><div class="indicator-label">Indice de Vieillissement</div><div class="indicator-desc">% collaborateurs > 50 ans</div></div>`;
+            document.getElementById('stability-indicators').innerHTML = `
+                <div class="indicator-card"><div class="indicator-value positive">${ind.indice_stabilite}%</div><div class="indicator-label">Indice de Stabilité</div><div class="indicator-desc">% ancienneté ≥ 5 ans</div></div>
+                <div class="indicator-card"><div class="indicator-value neutral">${eff.anciennete_moyenne}</div><div class="indicator-label">Ancienneté Moyenne (ans)</div><div class="indicator-desc">Min: ${eff.anciennete_min} - Max: ${eff.anciennete_max}</div></div>
+                <div class="indicator-card"><div class="indicator-value positive">${ind.taux_cdi}%</div><div class="indicator-label">Taux de CDI</div><div class="indicator-desc">${eff.par_contrat.CDI || 0} CDI / ${eff.total_fte} total</div></div>
+                <div class="indicator-card"><div class="indicator-value neutral">${ind.ratio_encadrement}%</div><div class="indicator-label">Ratio d'Encadrement</div><div class="indicator-desc">% Cadres dans l'effectif</div></div>`;
+            const budgetAnnuel = 245; // Budget annuel fixé à 245 MDHS
+            document.getElementById('financial-indicators').innerHTML = `
+                <div class="indicator-card"><div class="indicator-value neutral">${formatNumber(ms.ytd / 1000000, 2)}</div><div class="indicator-label">MS YTD (M MAD)</div><div class="indicator-desc">Cumul depuis début d'année</div></div>
+                <div class="indicator-card"><div class="indicator-value neutral">${formatNumber(ind.cout_par_etp / 1000, 1)}</div><div class="indicator-label">Coût/ETP (K MAD/mois)</div><div class="indicator-desc">MS mensuelle / FTE</div></div>
+                <div class="indicator-card"><div class="indicator-value neutral">${budgetAnnuel}</div><div class="indicator-label">Budget Annuel (M MAD)</div><div class="indicator-desc">Budget fixé</div></div>
+                <div class="indicator-card"><div class="indicator-value neutral">${formatNumber(ind.cout_par_etp * 12 / 1000, 0)}</div><div class="indicator-label">Coût/ETP Annuel (K MAD)</div><div class="indicator-desc">Projection annuelle</div></div>`;
+            renderEtbDetailTable();
+        }
+
+        function renderEtbDetailTable() {
+            const etbs = appData.effectif.par_etablissement, msEtb = appData.masse_salariale.par_etablissement;
+            let html = '', totalFte = 0, totalMs = 0;
+            Object.keys(etbs).forEach(etb => {
+                const data = etbs[etb], ms = msEtb[etb] || msEtb[etb.replace('è', 'é')] || 0;
+                const coutEtp = data.count > 0 ? ms / data.count : 0;
+                totalFte += data.count; totalMs += ms;
+                html += `<tr><td><strong>${etb}</strong></td><td style="text-align: right;">${formatNumber(data.count)}</td><td style="text-align: right;">${data.age_moyen} ans</td><td style="text-align: right;">${data.anciennete_moyenne} ans</td><td style="text-align: right;">${formatNumber(ms / 1000000, 2)} M MAD</td><td style="text-align: right;">${formatNumber(coutEtp / 1000, 1)} K MAD</td></tr>`;
+            });
+            html += `<tr style="background: #F8FAFC; font-weight: 600;"><td>TOTAL</td><td style="text-align: right;">${formatNumber(totalFte)}</td><td style="text-align: right;">-</td><td style="text-align: right;">-</td><td style="text-align: right;">${formatNumber(totalMs / 1000000, 2)} M MAD</td><td style="text-align: right;">${formatNumber(totalMs / totalFte / 1000, 1)} K MAD</td></tr>`;
+            document.getElementById('etbDetailTableBody').innerHTML = html;
+        }
+
+        // ============================================================
+        // FORMATION
+        // ============================================================
+        let filteredFormationActions = [];
+        let filteredFormationParticipations = [];
+        let formationCurrentPage = 1;
+        const formationColors = ['#FF6B35', '#1E3A5F', '#00B4A0', '#6B5BFF', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899'];
+
+        function renderFormation() {
+            const formation = appData.formation;
+            const emptyEl = document.getElementById('formation-empty');
+            const contentEl = document.getElementById('formation-content');
+            if (!formation) {
+                emptyEl.style.display = 'block';
+                contentEl.style.display = 'none';
+                return;
+            }
+            emptyEl.style.display = 'none';
+            contentEl.style.display = 'block';
+
+            filteredFormationActions = [...formation.actions];
+            filteredFormationParticipations = [...formation.participations];
+
+            const k = formation.kpis;
+            const coutTotalK = formatNumber(k.cout_total / 1000, 1);
+            const tauxCouverture = k.taux_couverture !== null && k.taux_couverture !== undefined ? `${k.taux_couverture}%` : 'N/A';
+            const tauxPresence = k.taux_presence !== null && k.taux_presence !== undefined ? `${k.taux_presence}%` : 'N/A';
+            const tauxInvest = k.taux_investissement_ms !== null && k.taux_investissement_ms !== undefined ? `${k.taux_investissement_ms}%` : 'N/A';
+
+            document.getElementById('formation-kpis').innerHTML = `
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-chalkboard-user"></i></div><div class="kpi-label">Actions de Formation</div><div class="kpi-value">${formatNumber(k.nb_actions)}</div><div class="kpi-trend">${formatNumber(k.nb_jours_total, 1)} jours programmés</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-users"></i></div><div class="kpi-label">Participations</div><div class="kpi-value">${formatNumber(k.nb_participations)}</div><div class="kpi-trend">${formatNumber(k.nb_participants_distincts)} collaborateurs distincts</div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-user-check"></i></div><div class="kpi-label">Taux de Couverture</div><div class="kpi-value">${tauxCouverture}</div><div class="kpi-trend">Collaborateurs formés / effectif</div></div>
+                <div class="kpi-card teal"><div class="kpi-icon teal"><i class="fas fa-clipboard-check"></i></div><div class="kpi-label">Taux de Présence</div><div class="kpi-value">${tauxPresence}</div><div class="kpi-trend">${k.presents} présents / ${k.absents} absents</div></div>
+                <div class="kpi-card purple"><div class="kpi-icon purple"><i class="fas fa-clock"></i></div><div class="kpi-label">Heures-Stagiaires</div><div class="kpi-value">${formatNumber(k.heures_stagiaires)}<span class="kpi-unit">h</span></div><div class="kpi-trend">Cumul de toutes les participations</div></div>
+                <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-coins"></i></div><div class="kpi-label">Coût Total Formation</div><div class="kpi-value">${coutTotalK}<span class="kpi-unit">K MAD</span></div><div class="kpi-trend">Formation + logistique</div></div>
+                <div class="kpi-card blue"><div class="kpi-icon blue"><i class="fas fa-sack-dollar"></i></div><div class="kpi-label">Coût Moyen / Participant</div><div class="kpi-value">${formatNumber(k.cout_moyen_participant)}<span class="kpi-unit">MAD</span></div></div>
+                <div class="kpi-card green"><div class="kpi-icon green"><i class="fas fa-percentage"></i></div><div class="kpi-label">Taux d'Investissement</div><div class="kpi-value">${tauxInvest}</div><div class="kpi-trend">Coût formation / Masse Salariale YTD</div></div>`;
+
+            renderFormationDomaineChart();
+            renderFormationTypeChart();
+            renderFormationSiteChart();
+            renderFormationStatutChart();
+            renderFormationEvolutionChart();
+            renderFormationActionsTable();
+            formationCurrentPage = 1;
+            renderFormationParticipationsTable();
+        }
+
+        function renderFormationDomaineChart() {
+            const ctx = document.getElementById('formationDomaineChart').getContext('2d');
+            const data = appData.formation.par_domaine;
+            const keys = Object.keys(data).sort((a, b) => data[b].nb_participations - data[a].nb_participations);
+            if (charts.formationDomaine) charts.formationDomaine.destroy();
+            charts.formationDomaine = new Chart(ctx, { type: 'bar', data: { labels: keys, datasets: [{ label: 'Participations', data: keys.map(k => data[k].nb_participations), backgroundColor: formationColors, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 30, minRotation: 0 } } } } });
+        }
+
+        function renderFormationTypeChart() {
+            const ctx = document.getElementById('formationTypeChart').getContext('2d');
+            const data = appData.formation.par_type_action;
+            const keys = Object.keys(data);
+            if (charts.formationType) charts.formationType.destroy();
+            charts.formationType = new Chart(ctx, { type: 'doughnut', data: { labels: keys, datasets: [{ data: keys.map(k => data[k].nb_participations), backgroundColor: ['#FF6B35', '#1E3A5F', '#00B4A0', '#6B5BFF'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        }
+
+        function renderFormationSiteChart() {
+            const ctx = document.getElementById('formationSiteChart').getContext('2d');
+            const data = appData.formation.par_site;
+            const keys = Object.keys(data).sort((a, b) => data[b].nb_participations - data[a].nb_participations);
+            if (charts.formationSite) charts.formationSite.destroy();
+            charts.formationSite = new Chart(ctx, { type: 'bar', data: { labels: keys, datasets: [{ label: 'Participations', data: keys.map(k => data[k].nb_participations), backgroundColor: '#6B5BFF', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        }
+
+        function renderFormationStatutChart() {
+            const ctx = document.getElementById('formationStatutChart').getContext('2d');
+            const data = appData.formation.par_statut;
+            const keys = Object.keys(data);
+            const colorMap = { 'Présent': '#22C55E', 'Absent': '#EF4444', 'Non renseigné': '#94A3B8' };
+            if (charts.formationStatut) charts.formationStatut.destroy();
+            charts.formationStatut = new Chart(ctx, { type: 'doughnut', data: { labels: keys, datasets: [{ data: keys.map(k => data[k]), backgroundColor: keys.map(k => colorMap[k] || '#94A3B8'), borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        }
+
+        function renderFormationEvolutionChart() {
+            const ctx = document.getElementById('formationEvolutionChart').getContext('2d');
+            const data = appData.formation.evolution_mensuelle;
+            if (charts.formationEvolution) charts.formationEvolution.destroy();
+            charts.formationEvolution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label: 'Heures-stagiaires', data: data.heures, backgroundColor: '#FF6B35', borderRadius: 6, yAxisID: 'y' },
+                        { label: 'Actions démarrées', data: data.nb_actions, type: 'line', borderColor: '#1E3A5F', backgroundColor: '#1E3A5F', tension: 0.3, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { position: 'left', title: { display: true, text: 'Heures' } },
+                        y1: { position: 'right', title: { display: true, text: 'Actions' }, grid: { drawOnChartArea: false }, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        function applyFormationFilters() {
+            const searchTerm = (document.getElementById('formationSearch').value || '').toLowerCase();
+            const domaineFilter = document.getElementById('filterFormationDomaine').value;
+            const typeFilter = document.getElementById('filterFormationType').value;
+            const siteFilter = document.getElementById('filterFormationSite').value;
+
+            filteredFormationActions = appData.formation.actions.filter(a => {
+                const matchSearch = !searchTerm || a.thematique.toLowerCase().includes(searchTerm) || a.cabinet.toLowerCase().includes(searchTerm);
+                const matchDomaine = !domaineFilter || a.domaine === domaineFilter;
+                const matchType = !typeFilter || a.type_action === typeFilter;
+                return matchSearch && matchDomaine && matchType;
+            });
+
+            filteredFormationParticipations = appData.formation.participations.filter(p => {
+                const matchSearch = !searchTerm || p.thematique.toLowerCase().includes(searchTerm) || p.nom.toLowerCase().includes(searchTerm) || p.prenom.toLowerCase().includes(searchTerm);
+                const matchDomaine = !domaineFilter || p.domaine === domaineFilter;
+                const matchSite = !siteFilter || p.site === siteFilter;
+                return matchSearch && matchDomaine && matchSite;
+            });
+
+            formationCurrentPage = 1;
+            renderFormationActionsTable();
+            renderFormationParticipationsTable();
+        }
+
+        function resetFormationFilters() {
+            document.getElementById('formationSearch').value = '';
+            document.getElementById('filterFormationDomaine').value = '';
+            document.getElementById('filterFormationType').value = '';
+            document.getElementById('filterFormationSite').value = '';
+            filteredFormationActions = [...appData.formation.actions];
+            filteredFormationParticipations = [...appData.formation.participations];
+            formationCurrentPage = 1;
+            renderFormationActionsTable();
+            renderFormationParticipationsTable();
+        }
+
+        function renderFormationActionsTable() {
+            let html = '';
+            filteredFormationActions.forEach(a => {
+                const dateDebut = a.date_debut ? new Date(a.date_debut).toLocaleDateString('fr-FR') : '-';
+                const dateFin = a.date_fin ? new Date(a.date_fin).toLocaleDateString('fr-FR') : '-';
+                const coutTotal = a.cout_formation + a.cout_logistique;
+                html += `<tr><td><strong>${a.n_action}</strong></td><td><span class="badge neutral">${a.domaine}</span></td><td>${a.thematique}</td><td>${a.type_action}</td><td>${dateDebut}</td><td>${dateFin}</td><td style="text-align:right;">${formatNumber(a.nb_jours, 1)}</td><td style="text-align:right;">${formatNumber(a.nb_heures)}</td><td style="text-align:right;">${a.nb_participants}</td><td>${a.cabinet || '-'}</td><td style="text-align:right;">${coutTotal > 0 ? formatCurrency(coutTotal) : '-'}</td></tr>`;
+            });
+            document.getElementById('formationActionsTableBody').innerHTML = html || '<tr><td colspan="11" class="empty-state">Aucun résultat</td></tr>';
+            document.getElementById('formationActionsCount').textContent = `(${filteredFormationActions.length})`;
+        }
+
+        function renderFormationParticipationsTable() {
+            const start = (formationCurrentPage - 1) * pageSize, end = start + pageSize;
+            const pageData = filteredFormationParticipations.slice(start, end);
+            let html = '';
+            pageData.forEach(p => {
+                const dateDebut = p.date_debut ? new Date(p.date_debut).toLocaleDateString('fr-FR') : '-';
+                let badgeClass = 'neutral';
+                if (p.statut === 'Présent') badgeClass = 'success';
+                else if (p.statut === 'Absent') badgeClass = 'danger';
+                html += `<tr><td>${p.nom}</td><td>${p.prenom}</td><td><span class="badge neutral">${p.classification}</span></td><td>${p.site}</td><td>${p.departement}</td><td>${p.thematique}</td><td>${dateDebut}</td><td><span class="badge ${badgeClass}">${p.statut}</span></td></tr>`;
+            });
+            document.getElementById('formationParticipationsTableBody').innerHTML = html || '<tr><td colspan="8" class="empty-state">Aucun résultat</td></tr>';
+            document.getElementById('formationParticipationsCount').textContent = `(${filteredFormationParticipations.length} résultats)`;
+            renderPagination('formationPagination', filteredFormationParticipations.length, formationCurrentPage, (page) => { formationCurrentPage = page; renderFormationParticipationsTable(); });
+        }
+
+        function exportFormationActionsCSV() {
+            const headers = ['N°', 'Domaine', 'Thématique', 'Type', 'Début', 'Fin', 'Jours', 'Heures', 'Participants', 'Cabinet', 'Coût Formation', 'Coût Logistique'];
+            let csv = headers.join(';') + '\n';
+            filteredFormationActions.forEach(a => {
+                csv += [a.n_action, a.domaine, a.thematique, a.type_action, a.date_debut, a.date_fin, a.nb_jours, a.nb_heures, a.nb_participants, a.cabinet, a.cout_formation, a.cout_logistique].join(';') + '\n';
+            });
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `formation_actions_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function exportFormationParticipationsCSV() {
+            const headers = ['Nom', 'Prénom', 'Classification', 'Site', 'Département', 'Thématique', 'Début', 'Statut'];
+            let csv = headers.join(';') + '\n';
+            filteredFormationParticipations.forEach(p => {
+                csv += [p.nom, p.prenom, p.classification, p.site, p.departement, p.thematique, p.date_debut, p.statut].join(';') + '\n';
+            });
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `formation_participations_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        // ============================================================
+        // SOCIAL (en attente du fichier de données dédié)
+        // ============================================================
+        function renderSocial() {
+            const social = appData.social;
+            if (!social) return;
+            const badge = document.getElementById('socialNavBadge');
+            if (social.available) {
+                if (badge) badge.remove();
+            } else {
+                document.getElementById('social-empty-message').textContent = social.message;
+            }
+        }
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageId = this.dataset.page;
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-' + pageId).classList.add('active');
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

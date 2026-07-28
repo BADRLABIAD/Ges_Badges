@@ -1,0 +1,8 @@
+# SSL certificates / private keys (generate locally with generate_cert.py)
+Dashboard_RH/cert.pem
+Dashboard_RH/key.pem
+Dashboard_RH/*.pfx
+
+# Python
+__pycache__/
+*.pyc
