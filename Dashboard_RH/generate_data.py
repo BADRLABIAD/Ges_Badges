@@ -217,14 +217,15 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
         'participations': participations
     }
 
-def build_social_placeholder():
-    """Le volet Social attend un fichier de données dédié. Tant qu'il n'est pas
-    fourni, on expose un état vide explicite plutôt que d'inventer des indicateurs."""
+def build_social_placeholder(label='sociales'):
+    """Le volet Social/Sociétal attend un fichier de données dédié. Tant qu'il
+    n'est pas fourni, on expose un état vide explicite plutôt que d'inventer
+    des indicateurs."""
     return {
         'available': False,
-        'message': "Le fichier de données Social n'a pas encore été fourni. "
-                   "Cette page affichera automatiquement les actions sociales et "
-                   "sociétales dès sa réception."
+        'message': f"Le fichier de données des actions {label} n'a pas encore été "
+                   "fourni. Cette page affichera automatiquement les indicateurs "
+                   "dès sa réception."
     }
 
 FR_MONTHS = {
@@ -265,16 +266,9 @@ def parse_beneficiaires(val):
     except (ValueError, TypeError):
         return None, str(val).strip()
 
-def process_social(social_path):
-    """Traiter le fichier des Actions sociales et sociétales."""
-    social_path = Path(social_path)
-    if not social_path.exists():
-        return build_social_placeholder()
-
-    df = pd.read_excel(social_path, sheet_name=0)
-    df.columns = ['action', 'periode', 'beneficiaires_raw', 'budget', 'region_raw', 'site_raw'][:len(df.columns)]
-    df = df[df['action'].notna()].copy()
-
+def build_social_stats(df, source_name):
+    """Calculer les indicateurs (KPIs, répartitions, évolution) pour un sous-
+    ensemble d'actions (Social ou Sociétal)."""
     actions = []
     par_region = {}
     par_site = {}
@@ -330,7 +324,7 @@ def process_social(social_path):
     return {
         'available': True,
         'meta': {
-            'source_file': social_path.name,
+            'source_file': source_name,
             'annees_disponibles': annees_disponibles
         },
         'kpis': {
@@ -350,6 +344,39 @@ def process_social(social_path):
             'budget': [round(mensuel[k]['budget'], 2) for k in mois_keys]
         },
         'actions': actions
+    }
+
+def classify_social_action(type_action_raw):
+    """La colonne 'Type Action' vaut 'Social' ou 'Sociétales' selon les
+    fichiers : on normalise sur ces deux catégories (par défaut Social si la
+    valeur est absente ou inattendue)."""
+    text = str(type_action_raw).strip().lower()
+    if 'sociét' in text or 'societ' in text:
+        return 'societal'
+    return 'social'
+
+def process_social(social_path):
+    """Traiter le fichier des Actions sociales et sociétales et le scinder en
+    deux volets distincts (Social / Sociétal) d'après la colonne 'Type Action'."""
+    social_path = Path(social_path)
+    if not social_path.exists():
+        return {
+            'social': build_social_placeholder('sociales'),
+            'societal': build_social_placeholder('sociétales')
+        }
+
+    df = pd.read_excel(social_path, sheet_name=0)
+    columns = ['action', 'type_action', 'periode', 'beneficiaires_raw', 'budget', 'region_raw', 'site_raw']
+    df.columns = columns[:len(df.columns)]
+    df = df[df['action'].notna()].copy()
+    if 'type_action' not in df.columns:
+        df['type_action'] = ''
+
+    df['category'] = df['type_action'].apply(classify_social_action)
+
+    return {
+        'social': build_social_stats(df[df['category'] == 'social'], social_path.name),
+        'societal': build_social_stats(df[df['category'] == 'societal'], social_path.name)
     }
 
 def generate_data(excel_path=None, output_path=None, formation_path=None, social_path=None):
@@ -838,13 +865,17 @@ def generate_data(excel_path=None, output_path=None, formation_path=None, social
     else:
         print(f"   ⚠️ Fichier Formation non trouvé: {formation_path} (page Formation vide)")
 
-    # ============ SOCIAL ============
-    social_stats = process_social(social_path)
+    # ============ SOCIAL / SOCIÉTAL ============
+    social_split = process_social(social_path)
+    social_stats = social_split['social']
+    societal_stats = social_split['societal']
     if social_stats.get('available'):
         print(f"🤝 Social: {social_stats['kpis']['nb_actions']} actions, "
               f"{social_stats['kpis']['budget_total']:,.0f} MAD de budget")
+        print(f"🌍 Sociétal: {societal_stats['kpis']['nb_actions']} actions, "
+              f"{societal_stats['kpis']['budget_total']:,.0f} MAD de budget")
     else:
-        print(f"   ⚠️ Fichier Social non trouvé: {social_path} (page Social vide)")
+        print(f"   ⚠️ Fichier Social non trouvé: {social_path} (pages Social/Sociétal vides)")
 
     # ============ ASSEMBLAGE FINAL ============
     mois_noms = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
@@ -862,7 +893,8 @@ def generate_data(excel_path=None, output_path=None, formation_path=None, social
         'mouvements': mvt_stats,
         'indicateurs': indicators,
         'formation': formation_stats,
-        'social': social_stats
+        'social': social_stats,
+        'societal': societal_stats
     }
 
     # Sauvegarder

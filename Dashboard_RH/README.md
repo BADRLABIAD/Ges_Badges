@@ -175,17 +175,21 @@ froid, Résultat. Les colonnes propres à l'action (Domaine, dates, coûts...) n
 sont attendues que sur la première ligne de chaque formation ; le script
 propage automatiquement ces valeurs sur les lignes suivantes.
 
-### Structure du fichier Social attendu (data/SOCIAL.xlsx)
+### Structure du fichier Social/Sociétal attendu (data/SOCIAL.xlsx)
 
-Fichier optionnel : s'il est absent, la page **Social** affiche un état vide.
-Une seule feuille, une ligne par action, colonnes dans cet ordre : Actions
-(description), Date de réalisation (texte libre du type "Février 2026" ou
-"Juin - Juillet 2026"), Nombre de bénéficiaires, Budget, Région, Site(s)
-Sonasid concerné(s). Les régions/sites multiples sont séparés par des
-virgules. Le budget social annuel *alloué* (par opposition au budget
-*consommé*, calculé depuis le fichier) se saisit directement dans
-l'interface — champ "Budget Social Annuel Alloué" sur la page Social —
-et reste stocké dans le navigateur (pas de rechargement Excel nécessaire).
+Fichier optionnel : s'il est absent, les pages **Social** et **Sociétal**
+affichent un état vide. Une seule feuille, une ligne par action, colonnes
+dans cet ordre : Actions (description), Type Action (`Social` ou
+`Sociétales` — c'est cette colonne qui répartit chaque ligne vers la page
+Social ou la page Sociétal), Date de réalisation (texte libre du type
+"Février 2026" ou "Juin - Juillet 2026"), Nombre de bénéficiaires, Budget,
+Région, Site(s) Sonasid concerné(s). Les régions/sites multiples sont
+séparés par des virgules.
+
+Les budgets *alloués* (par opposition aux budgets *consommés*, calculés
+depuis les fichiers Excel) se saisissent tous depuis la page **Budget**,
+protégée par un mot de passe administrateur, et restent stockés dans le
+navigateur (pas de rechargement Excel nécessaire pour les ajuster).
 
 ---
 
@@ -227,23 +231,24 @@ et reste stocké dans le navigateur (pas de rechargement Excel nécessaire).
 |------------|-------------|
 | **Taux de couverture** | Collaborateurs formés (distincts) / Effectif total × 100 |
 | **Taux de présence** | Présents / (Présents + Absents) × 100 |
-| **Heures-stagiaires** | Somme des heures de formation × participants |
+| **Heures Formation** | Somme des heures de formation × participants |
 | **Coût moyen par participant** | (Coût formation + logistique) / Nb participations |
 | **Taux d'investissement formation** | Coût total formation / Masse salariale YTD × 100 |
 | **Synthèse par cabinet** | Actions/participations/jours/coût regroupés par cabinet de formation, filtrable par année |
 
-### Indicateurs Social
+### Indicateurs Social / Sociétal / Budget
 | Indicateur | Description |
 |------------|-------------|
-| **Budget consommé** | Somme des budgets des actions réalisées (issu de SOCIAL.xlsx) |
-| **Budget alloué** | Saisi manuellement dans l'interface (page Social), non issu d'un fichier |
-| **Taux de réalisation** | Budget consommé / Budget alloué × 100 |
+| **Budget consommé** | Somme des budgets des actions réalisées, par catégorie (Social, Sociétal, Formation, Masse Salariale) |
+| **Budget FTE** | Coût annuel cible par collaborateur, comparé au coût réel (Coût par ETP mensuel × 12) |
+| **Budget alloué** | Saisi par un administrateur sur la page Budget (mot de passe requis), non issu d'un fichier |
+| **Taux de réalisation** | Budget consommé / Budget alloué × 100, par catégorie |
 
 ---
 
 ## 🎨 Fonctionnalités
 
-- ✅ **7 pages** : Synthèse, Effectifs, Masse Salariale, Mouvements, Indicateurs, Formation, Social
+- ✅ **9 pages** : Synthèse, Effectifs, Masse Salariale, Mouvements, Indicateurs, Formation, Social, Sociétal, Budget
 - ✅ **Filtres dynamiques** : Établissement, Classification, Type de contrat
 - ✅ **Recherche globale** : Matricule, Nom, Prénom, Fonction
 - ✅ **Export CSV** : Liste des collaborateurs
