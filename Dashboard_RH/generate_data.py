@@ -355,9 +355,25 @@ def classify_social_action(type_action_raw):
         return 'societal'
     return 'social'
 
+def pick_column(raw_columns, keywords):
+    """Trouve puis retire de la liste la première colonne dont l'en-tête
+    contient un des mots-clés (recherche insensible à la casse). Retourne
+    None si aucune colonne ne correspond."""
+    for col in list(raw_columns):
+        name = str(col).strip().lower()
+        if any(kw in name for kw in keywords):
+            raw_columns.remove(col)
+            return col
+    return None
+
 def process_social(social_path):
     """Traiter le fichier des Actions sociales et sociétales et le scinder en
-    deux volets distincts (Social / Sociétal) d'après la colonne 'Type Action'."""
+    deux volets distincts (Social / Sociétal) d'après la colonne 'Type Action'.
+
+    Les en-têtes exacts varient d'un export à l'autre (colonne 'Type Action'
+    parfois absente, ordre des colonnes différent) : on identifie chaque rôle
+    par mot-clé dans l'en-tête plutôt que par position, pour ne pas décaler
+    silencieusement les valeurs si une colonne manque ou change de place."""
     social_path = Path(social_path)
     if not social_path.exists():
         return {
@@ -365,12 +381,32 @@ def process_social(social_path):
             'societal': build_social_placeholder('sociétales')
         }
 
-    df = pd.read_excel(social_path, sheet_name=0)
-    columns = ['action', 'type_action', 'periode', 'beneficiaires_raw', 'budget', 'region_raw', 'site_raw']
-    df.columns = columns[:len(df.columns)]
+    raw = pd.read_excel(social_path, sheet_name=0)
+    available = list(raw.columns)
+    col_type = pick_column(available, ['type'])
+    col_action = pick_column(available, ['action'])
+    col_periode = pick_column(available, ['date', 'période', 'periode', 'réalisation', 'realisation'])
+    col_benef = pick_column(available, ['bénéfic', 'benefic'])
+    col_budget = pick_column(available, ['budget'])
+    col_region = pick_column(available, ['région', 'region'])
+    col_site = pick_column(available, ['site'])
+
+    if col_action is None:
+        raise ValueError(
+            f"Colonne 'Actions' introuvable dans {social_path.name} "
+            f"(en-têtes lus : {list(raw.columns)})"
+        )
+
+    df = pd.DataFrame({
+        'action': raw[col_action],
+        'type_action': raw[col_type] if col_type is not None else '',
+        'periode': raw[col_periode] if col_periode is not None else '',
+        'beneficiaires_raw': raw[col_benef] if col_benef is not None else None,
+        'budget': raw[col_budget] if col_budget is not None else 0,
+        'region_raw': raw[col_region] if col_region is not None else None,
+        'site_raw': raw[col_site] if col_site is not None else None,
+    })
     df = df[df['action'].notna()].copy()
-    if 'type_action' not in df.columns:
-        df['type_action'] = ''
 
     df['category'] = df['type_action'].apply(classify_social_action)
 

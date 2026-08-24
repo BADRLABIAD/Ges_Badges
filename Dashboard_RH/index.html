@@ -977,7 +977,7 @@
                     <div class="table-header"><div class="table-title"><i class="fas fa-table-list" style="color: var(--secondary-blue); margin-right: 8px;"></i>Détail par Catégorie</div></div>
                     <div style="overflow-x: auto;">
                         <table class="data-table" id="budgetDetailTable">
-                            <thead><tr><th>Catégorie</th><th style="text-align:right;">Budget Alloué (MAD)</th><th style="text-align:right;">Consommé (MAD)</th><th style="text-align:right;">Reste (MAD)</th><th style="text-align:right;">Réalisation</th></tr></thead>
+                            <thead><tr><th>Catégorie</th><th style="text-align:right;">Budget / Cible</th><th style="text-align:right;">Consommé / Réel</th><th style="text-align:right;">Reste / Écart</th><th style="text-align:right;">Réalisation</th></tr></thead>
                             <tbody id="budgetDetailTableBody"></tbody>
                         </table>
                     </div>
@@ -2168,9 +2168,10 @@
                     consommeLabel: 'Consommé (YTD)', unit: 'MAD'
                 },
                 {
-                    key: 'fte', label: 'Budget FTE (coût annuel cible / collaborateur)', icon: 'fa-user-tie',
-                    consomme: (ind.cout_par_etp || 0) * 12, seed: null,
-                    consommeLabel: 'Coût réel par ETP (annualisé)', unit: 'MAD', excludeFromChart: true
+                    key: 'fte', label: 'Budget FTE (effectif CDI cible fin d\'année)', icon: 'fa-user-tie',
+                    consomme: (appData.effectif.par_contrat && appData.effectif.par_contrat.CDI) || 0, seed: null,
+                    consommeLabel: 'Effectif CDI actuel (fin de période)', unit: 'collaborateurs',
+                    isCount: true, excludeFromChart: true
                 },
                 {
                     key: 'formation', label: 'Formation', icon: 'fa-graduation-cap',
@@ -2204,10 +2205,13 @@
                 const budget = getBudgetValue(cat);
                 const taux = budget ? (cat.consomme / budget) * 100 : null;
                 const color = taux === null ? 'var(--text-muted)' : (taux > 100 ? 'var(--danger)' : (taux > 85 ? 'var(--warning)' : 'var(--accent-green)'));
+                const consommeDisplay = cat.isCount ? `${formatNumber(cat.consomme)}<span class="kpi-unit">${cat.unit}</span>` : `${formatNumber(cat.consomme / 1000, 0)}<span class="kpi-unit">K ${cat.unit}</span>`;
+                const budgetDisplay = budget ? (cat.isCount ? formatNumber(budget) : formatNumber(budget / 1000, 0) + 'K') : null;
+                const budgetWord = cat.isCount ? 'cible' : 'alloué';
                 kpiHtml += `
                 <div class="kpi-card"><div class="kpi-icon orange"><i class="fas ${cat.icon}"></i></div><div class="kpi-label">${cat.label}</div>
-                    <div class="kpi-value" style="font-size:20px;">${formatNumber(cat.consomme / 1000, 0)}<span class="kpi-unit">K ${cat.unit}</span></div>
-                    <div class="kpi-trend">${cat.consommeLabel} ${budget ? '/ ' + formatNumber(budget / 1000, 0) + 'K alloué' : '(budget non défini)'}</div>
+                    <div class="kpi-value" style="font-size:20px;">${consommeDisplay}</div>
+                    <div class="kpi-trend">${cat.consommeLabel} ${budgetDisplay ? '/ ' + budgetDisplay + ' ' + budgetWord : '(' + budgetWord + ' non défini' + (cat.isCount ? 'e' : '') + ')'}</div>
                     <div class="budget-progress-track"><div class="budget-progress-fill" style="width:${taux !== null ? Math.min(taux, 100) : 0}%; background:${color};"></div></div>
                     <div style="font-size:12px; margin-top:4px; color:${color}; font-weight:600;">${taux !== null ? formatNumber(taux, 1) + '%' : 'N/A'}</div>
                 </div>`;
@@ -2246,12 +2250,14 @@
                 const reste = budget !== null ? budget - cat.consomme : null;
                 const taux = budget ? (cat.consomme / budget) * 100 : null;
                 const color = taux === null ? 'var(--text-muted)' : (taux > 100 ? 'var(--danger)' : (taux > 85 ? 'var(--warning)' : 'var(--accent-green)'));
-                const inputHtml = `<input type="number" class="budget-input" id="budgetInput_${cat.key}" min="0" step="1000" value="${budget !== null ? budget : ''}" placeholder="Non défini" disabled>`;
+                const fmt = (v) => cat.isCount ? formatNumber(v) + ' ' + cat.unit : formatCurrency(v);
+                const step = cat.isCount ? '1' : '1000';
+                const inputHtml = `<input type="number" class="budget-input" id="budgetInput_${cat.key}" min="0" step="${step}" value="${budget !== null ? budget : ''}" placeholder="Non défini" disabled>`;
                 html += `<tr>
                     <td><strong><i class="fas ${cat.icon}" style="margin-right:8px; color: var(--text-muted);"></i>${cat.label}</strong></td>
                     <td style="text-align:right;">${inputHtml}</td>
-                    <td style="text-align:right;">${formatCurrency(cat.consomme)}</td>
-                    <td style="text-align:right; color:${reste !== null && reste < 0 ? 'var(--danger)' : 'inherit'};">${reste !== null ? formatCurrency(reste) : '-'}</td>
+                    <td style="text-align:right;">${fmt(cat.consomme)}</td>
+                    <td style="text-align:right; color:${reste !== null && reste < 0 ? 'var(--danger)' : 'inherit'};">${reste !== null ? fmt(reste) : '-'}</td>
                     <td style="text-align:right; color:${color}; font-weight:600;">${taux !== null ? formatNumber(taux, 1) + '%' : 'N/A'}</td>
                 </tr>`;
             });
