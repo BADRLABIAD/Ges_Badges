@@ -366,12 +366,18 @@ def build_social_stats(df, source_name):
             'description': action_text,
             'periode': periode_libelle,
             'annee': annee,
+            'mois_debut': mois_debut,
             'beneficiaires': beneficiaires,
             'beneficiaires_texte': beneficiaires_texte,
             'budget': budget,
             'regions': regions,
             'sites': sites
         })
+
+    # Ordre chronologique (Janvier -> Décembre) ; une période non reconnue
+    # (annee/mois manquants) est reléguée en fin de liste plutôt que de
+    # perturber l'ordre des autres.
+    actions.sort(key=lambda a: (a['annee'] is None, a['annee'] or 0, a['mois_debut'] is None, a['mois_debut'] or 0))
 
     annees_disponibles = sorted({a['annee'] for a in actions if a['annee']})
     mois_keys = sorted(mensuel.keys())

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-09-02T09:32:46.855410",
+    "generated_at": "2026-09-02T10:01:15.539571",
     "source_file": "TDB_COURANT.xlsx",
     "periode": "Août 2026",
     "periodes_disponibles": [
@@ -126303,48 +126303,11 @@
     },
     "actions": [
       {
-        "titre": "Action solidaire Well-Being : sensibilisation au bien-être et à la santé à travers un spec…",
-        "description": "Action solidaire Well-Being : sensibilisation au bien-être et à la santé à travers un spectacle humoristique animé par un cardiologue.",
-        "periode": "Juillet 2026",
-        "annee": 2026,
-        "beneficiaires": 140.0,
-        "beneficiaires_texte": null,
-        "budget": 222150.0,
-        "regions": [
-          "Nador",
-          "Casablanca",
-          "El Jadida"
-        ],
-        "sites": [
-          "Nador",
-          "Casablanca",
-          "El Jadida"
-        ]
-      },
-      {
-        "titre": "Organisation d'un Family Day en partenariat avec l'Association L'École du Jeune Spectateur…",
-        "description": "Organisation d'un Family Day en partenariat avec l'Association L'École du Jeune Spectateur, autour du spectacle Mirath Atfal d'Abdellah Ben Cherradi. Cet événement a permis aux collaborateurs et à leurs familles de découvrir, à travers une expérience musicale interactive, la richesse du patrimoine musical marocain de manière ludique, participative et intergénérationnelle.",
-        "periode": "Juillet 2026",
-        "annee": 2026,
-        "beneficiaires": 580.0,
-        "beneficiaires_texte": null,
-        "budget": 767676.0,
-        "regions": [
-          "Nador",
-          "Casablanca",
-          "El Jadida"
-        ],
-        "sites": [
-          "Nador",
-          "Casablanca",
-          "El Jadida"
-        ]
-      },
-      {
         "titre": "DEPISTAGE PULMONAIRE",
         "description": "DEPISTAGE PULMONAIRE",
         "periode": "Fevrier - Avril 2026",
         "annee": 2026,
+        "mois_debut": 2,
         "beneficiaires": 617.0,
         "beneficiaires_texte": null,
         "budget": 42390.0,
@@ -126364,6 +126327,7 @@
         "description": "JOURNEE DE LA FEMME",
         "periode": "Mars 2026",
         "annee": 2026,
+        "mois_debut": 3,
         "beneficiaires": 68.0,
         "beneficiaires_texte": null,
         "budget": 95200.0,
@@ -126383,6 +126347,7 @@
         "description": "CIRCONCISION",
         "periode": "Mai 2026",
         "annee": 2026,
+        "mois_debut": 5,
         "beneficiaires": 10.0,
         "beneficiaires_texte": null,
         "budget": 13100.0,
@@ -126396,63 +126361,11 @@
         ]
       },
       {
-        "titre": "CENTRE AERE",
-        "description": "CENTRE AERE",
-        "periode": "Juillet 2026",
-        "annee": 2026,
-        "beneficiaires": 19.0,
-        "beneficiaires_texte": null,
-        "budget": 40000.0,
-        "regions": [
-          "Siege et PFC"
-        ],
-        "sites": [
-          "Siege et PFC"
-        ]
-      },
-      {
-        "titre": "Family Day",
-        "description": "Family Day",
-        "periode": "Juillet 2026",
-        "annee": 2026,
-        "beneficiaires": 113.0,
-        "beneficiaires_texte": null,
-        "budget": 639730.0,
-        "regions": [
-          "Casablanca",
-          "Jorf",
-          "Nador"
-        ],
-        "sites": [
-          "Casablanca",
-          "Jorf",
-          "Nador"
-        ]
-      },
-      {
-        "titre": "Achoura",
-        "description": "Achoura",
-        "periode": "Juin 2026",
-        "annee": 2026,
-        "beneficiaires": 767.0,
-        "beneficiaires_texte": null,
-        "budget": 266700.0,
-        "regions": [
-          "Casablanca",
-          "Jorf",
-          "Nador"
-        ],
-        "sites": [
-          "Casablanca",
-          "Jorf",
-          "Nador"
-        ]
-      },
-      {
         "titre": "Excursion",
         "description": "Excursion",
         "periode": "Mai 2026",
         "annee": 2026,
+        "mois_debut": 5,
         "beneficiaires": 288.0,
         "beneficiaires_texte": null,
         "budget": 323643.84,
@@ -126468,10 +126381,107 @@
         ]
       },
       {
+        "titre": "Achoura",
+        "description": "Achoura",
+        "periode": "Juin 2026",
+        "annee": 2026,
+        "mois_debut": 6,
+        "beneficiaires": 767.0,
+        "beneficiaires_texte": null,
+        "budget": 266700.0,
+        "regions": [
+          "Casablanca",
+          "Jorf",
+          "Nador"
+        ],
+        "sites": [
+          "Casablanca",
+          "Jorf",
+          "Nador"
+        ]
+      },
+      {
+        "titre": "Action solidaire Well-Being : sensibilisation au bien-être et à la santé à travers un spec…",
+        "description": "Action solidaire Well-Being : sensibilisation au bien-être et à la santé à travers un spectacle humoristique animé par un cardiologue.",
+        "periode": "Juillet 2026",
+        "annee": 2026,
+        "mois_debut": 7,
+        "beneficiaires": 140.0,
+        "beneficiaires_texte": null,
+        "budget": 222150.0,
+        "regions": [
+          "Nador",
+          "Casablanca",
+          "El Jadida"
+        ],
+        "sites": [
+          "Nador",
+          "Casablanca",
+          "El Jadida"
+        ]
+      },
+      {
+        "titre": "Organisation d'un Family Day en partenariat avec l'Association L'École du Jeune Spectateur…",
+        "description": "Organisation d'un Family Day en partenariat avec l'Association L'École du Jeune Spectateur, autour du spectacle Mirath Atfal d'Abdellah Ben Cherradi. Cet événement a permis aux collaborateurs et à leurs familles de découvrir, à travers une expérience musicale interactive, la richesse du patrimoine musical marocain de manière ludique, participative et intergénérationnelle.",
+        "periode": "Juillet 2026",
+        "annee": 2026,
+        "mois_debut": 7,
+        "beneficiaires": 580.0,
+        "beneficiaires_texte": null,
+        "budget": 767676.0,
+        "regions": [
+          "Nador",
+          "Casablanca",
+          "El Jadida"
+        ],
+        "sites": [
+          "Nador",
+          "Casablanca",
+          "El Jadida"
+        ]
+      },
+      {
+        "titre": "CENTRE AERE",
+        "description": "CENTRE AERE",
+        "periode": "Juillet 2026",
+        "annee": 2026,
+        "mois_debut": 7,
+        "beneficiaires": 19.0,
+        "beneficiaires_texte": null,
+        "budget": 40000.0,
+        "regions": [
+          "Siege et PFC"
+        ],
+        "sites": [
+          "Siege et PFC"
+        ]
+      },
+      {
+        "titre": "Family Day",
+        "description": "Family Day",
+        "periode": "Juillet 2026",
+        "annee": 2026,
+        "mois_debut": 7,
+        "beneficiaires": 113.0,
+        "beneficiaires_texte": null,
+        "budget": 639730.0,
+        "regions": [
+          "Casablanca",
+          "Jorf",
+          "Nador"
+        ],
+        "sites": [
+          "Casablanca",
+          "Jorf",
+          "Nador"
+        ]
+      },
+      {
         "titre": "RENTREE SCOLAIRE",
         "description": "RENTREE SCOLAIRE",
         "periode": "Septembre 2026",
         "annee": 2026,
+        "mois_debut": 9,
         "beneficiaires": 636.0,
         "beneficiaires_texte": null,
         "budget": 311350.0,
@@ -126574,6 +126584,7 @@
         "description": "Distribution de paniers d’urgence post-inondations Nord du Maroc : Mobilisation et acheminement de paniers familiaux contenant produits alimentaires de première nécessité, kits d’hygiène, vêtements et couvertures au profit des populations déplacées suite aux inondations dans le nord du pays.",
         "periode": "Fevrier 2026",
         "annee": 2026,
+        "mois_debut": 2,
         "beneficiaires": 700.0,
         "beneficiaires_texte": null,
         "budget": 300000.0,
@@ -126585,10 +126596,27 @@
         ]
       },
       {
+        "titre": "Ftour solidaire avec l’association Association Mama Sultana au profit d’enfants abandonnés…",
+        "description": "Ftour solidaire avec l’association Association Mama Sultana au profit d’enfants abandonnés, comprenant une journée d’animations dédiée aux enfants ainsi que la distribution de cadeaux pour leur offrir un moment de joie et de partage",
+        "periode": "Mars 2026",
+        "annee": 2026,
+        "mois_debut": 3,
+        "beneficiaires": 40.0,
+        "beneficiaires_texte": null,
+        "budget": 87072.0,
+        "regions": [
+          "berrechid"
+        ],
+        "sites": [
+          "Casablanca"
+        ]
+      },
+      {
         "titre": "Trail Solidaire SONASID 2026 Sponsoring de la course en montagne SONASID High Atlas Ultra …",
         "description": "Trail Solidaire SONASID 2026 Sponsoring de la course en montagne SONASID High Atlas Ultra Trail \"SONASID  HAUT\" ;",
         "periode": "Avril 2026",
         "annee": 2026,
+        "mois_debut": 4,
         "beneficiaires": 1500.0,
         "beneficiaires_texte": null,
         "budget": 414756.0,
@@ -126602,25 +126630,11 @@
         ]
       },
       {
-        "titre": "Ftour solidaire avec l’association Association Mama Sultana au profit d’enfants abandonnés…",
-        "description": "Ftour solidaire avec l’association Association Mama Sultana au profit d’enfants abandonnés, comprenant une journée d’animations dédiée aux enfants ainsi que la distribution de cadeaux pour leur offrir un moment de joie et de partage",
-        "periode": "Mars 2026",
-        "annee": 2026,
-        "beneficiaires": 40.0,
-        "beneficiaires_texte": null,
-        "budget": 87072.0,
-        "regions": [
-          "berrechid"
-        ],
-        "sites": [
-          "Casablanca"
-        ]
-      },
-      {
         "titre": "Sonasid a établi un partenariat avec SOS Villages d’Enfants Maroc pour le parrainage de de…",
         "description": "Sonasid a établi un partenariat avec SOS Villages d’Enfants Maroc pour le parrainage de deux maisons situées à Imzouren et El Jadida. À ce titre, Sonasid prend en charge les dépenses liées à l’accueil de 8 enfants par maison, incluant l’alimentation, l’hygiène, les vêtements, les fournitures scolaires, les soins médicaux, les activités culturelles, les frais d’eau et d’électricité, ainsi que le salaire et les charges de la mère SOS responsable de chaque foyer.",
         "periode": "Mai 2026",
         "annee": 2026,
+        "mois_debut": 5,
         "beneficiaires": 16.0,
         "beneficiaires_texte": null,
         "budget": 296736.0,
@@ -126636,6 +126650,7 @@
         "description": "Organisation d’une semaine de sensibilisation à la protection de l’environnement, avec la participation d’étudiants universitaires: conférences, nettoyage de plage et activités de sensibilisation.",
         "periode": "Juin - Juillet 2026",
         "annee": 2026,
+        "mois_debut": 6,
         "beneficiaires": 150.0,
         "beneficiaires_texte": null,
         "budget": 60000.0,
@@ -126651,6 +126666,7 @@
         "description": "Installation de fontaines à eau à la Faculté des Sciences Juridiques, Économiques et Sociales (FSJES) afin de favoriser l'accès à l'eau potable et de promouvoir des pratiques durables.",
         "periode": "Juin 2026",
         "annee": 2026,
+        "mois_debut": 6,
         "beneficiaires": null,
         "beneficiaires_texte": "4 Fotaines a eau",
         "budget": 58080.0,
