@@ -78,13 +78,25 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
     df = pd.read_excel(formation_path, sheet_name=0)
     df.columns = FORMATION_COLUMNS[:len(df.columns)]
 
-    # Les colonnes "action" ne sont renseignées que sur la 1ère ligne de chaque
-    # formation (cellules fusionnées à l'export) : on les propage vers le bas.
+    # Les colonnes d'identité de l'action (domaine, thématique, cabinet, dates)
+    # ne sont renseignées que sur la 1ère ligne de chaque formation (cellules
+    # fusionnées à l'export) : on les propage vers le bas.
+    #
+    # nb_jours / cout_formation / cout_logistique restent volontairement EN
+    # DEHORS de cette propagation : une même action peut avoir été livrée en
+    # plusieurs sous-sessions (cohortes différentes, coûts différents), et
+    # chacune inscrit sa propre valeur sur une ligne du bloc — parfois
+    # identique à la 1ère (répétée par erreur de saisie), parfois différente
+    # (ex. Habilitation Electrique B0/H0 : 25200, 18000, 9000, 18000 MAD sur
+    # 4 lignes distinctes). Les prendre en compte une seule fois (comme le
+    # faisait l'ancienne version) sous-évaluait le coût réel total.
     action_cols = ['n_action', 'domaine', 'type_action', 'thematique', 'date_debut',
-                   'date_fin', 'nb_jours', 'cabinet', 'formateur_interne',
-                   'cout_formation', 'cout_logistique']
+                   'date_fin', 'cabinet', 'formateur_interne']
     df[action_cols] = df[action_cols].ffill()
     df = df[df['n_action'].notna()].copy()
+    df['nb_jours'] = pd.to_numeric(df['nb_jours'], errors='coerce')
+    df['cout_formation'] = pd.to_numeric(df['cout_formation'], errors='coerce')
+    df['cout_logistique'] = pd.to_numeric(df['cout_logistique'], errors='coerce')
 
     df['date_debut'] = pd.to_datetime(df['date_debut'], errors='coerce')
     df['date_fin'] = pd.to_datetime(df['date_fin'], errors='coerce')
@@ -115,6 +127,13 @@ def process_formation(formation_path, fte_total=0, ms_ytd=0):
     df['date_fin'] = df['n_action'].map(date_fin_par_action)
     df['annee'] = df['date_debut'].dt.year
     actions_df['annee'] = actions_df['date_debut'].dt.year
+
+    # Coût et durée réels d'une action = somme de toutes ses sous-sessions
+    # (voir remarque ci-dessus), pas seulement la 1ère ligne du bloc.
+    action_totals = df.groupby('n_action')[['nb_jours', 'cout_formation', 'cout_logistique']].sum(min_count=0)
+    actions_df = actions_df.set_index('n_action')
+    actions_df[['nb_jours', 'cout_formation', 'cout_logistique']] = action_totals
+    actions_df = actions_df.reset_index()
 
     nb_actions = int(df['n_action'].nunique())
     nb_participations = int(len(df))
