@@ -774,7 +774,7 @@
                             <div class="table-title"><i class="fas fa-user-minus" style="color: var(--danger); margin-right: 8px;"></i>Départs <span id="depCount" style="color: var(--text-muted); font-weight: 400;"></span></div>
                             <div class="table-actions"><button class="btn-export" onclick="exportDepartsCSV()"><i class="fas fa-download"></i>Export</button></div>
                         </div>
-                        <table class="data-table"><thead><tr><th>Matricule</th><th>Nom</th><th>Site</th><th>Date Départ</th><th>Motif</th></tr></thead><tbody id="departsTableBody"></tbody></table>
+                        <table class="data-table"><thead><tr><th>Matricule</th><th>Nom</th><th>Site</th><th>Collège</th><th>Date Départ</th><th>Motif</th></tr></thead><tbody id="departsTableBody"></tbody></table>
                     </div>
                 </div>
             </div>
@@ -1738,13 +1738,16 @@
             let html = '';
             data.forEach(dep => {
                 const dateFormatted = dep.date ? new Date(dep.date).toLocaleDateString('fr-FR') : '-';
-                let badgeClass = 'warning';
-                if (dep.motif.toLowerCase().includes('démission')) badgeClass = 'warning';
-                else if (dep.motif.toLowerCase().includes('décès')) badgeClass = 'danger';
-                else if (dep.motif.toLowerCase().includes('essai')) badgeClass = 'info';
-                html += `<tr><td><strong>${dep.matricule}</strong></td><td>${dep.nom} ${dep.prenom}</td><td>${dep.site}</td><td>${dateFormatted}</td><td><span class="badge ${badgeClass}">${dep.motif}</span></td></tr>`;
+                const motifLower = dep.motif.toLowerCase();
+                let badgeClass = 'neutral';
+                if (motifLower.includes('démission')) badgeClass = 'warning';
+                else if (motifLower.includes('décès')) badgeClass = 'danger';
+                else if (motifLower.includes('essai')) badgeClass = 'info';
+                else if (motifLower.includes('licenciement') || motifLower.includes('abandon')) badgeClass = 'danger';
+                else if (motifLower.includes('retraite') || motifLower.includes('volontaire')) badgeClass = 'success';
+                html += `<tr><td><strong>${dep.matricule}</strong></td><td>${dep.nom} ${dep.prenom}</td><td>${dep.site}</td><td><span class="badge neutral">${dep.college || '-'}</span></td><td>${dateFormatted}</td><td><span class="badge ${badgeClass}">${dep.motif}</span></td></tr>`;
             });
-            document.getElementById('departsTableBody').innerHTML = html || '<tr><td colspan="5" class="empty-state">Aucun départ</td></tr>';
+            document.getElementById('departsTableBody').innerHTML = html || '<tr><td colspan="6" class="empty-state">Aucun départ</td></tr>';
             document.getElementById('depCount').textContent = `(${data.length})`;
         }
 

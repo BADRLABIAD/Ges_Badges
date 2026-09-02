@@ -8,6 +8,7 @@ Génère TOUS les indicateurs nécessaires pour le dashboard
 import pandas as pd
 import json
 import re
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 import numpy as np
@@ -24,6 +25,41 @@ class NumpyEncoder(json.JSONEncoder):
         elif pd.isna(obj):
             return None
         return super().default(obj)
+
+def strip_accents(text):
+    """Retire les accents pour des comparaisons de texte robustes aux fautes
+    de saisie ('Retraité' / 'retraite', 'éssai' / 'essai', ...)."""
+    return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+
+def classify_motif_depart(motif_raw):
+    """Normaliser le motif de départ. On ne force jamais tout ce qui n'est
+    pas reconnu dans un fourre-tout 'Autre' : un motif qui ne correspond à
+    aucun des cas connus est affiché tel quel (texte d'origine, nettoyé)."""
+    original = str(motif_raw).strip() if motif_raw is not None else ''
+    if not original:
+        return 'Non renseigné'
+    norm = strip_accents(original).lower()
+    if 'demission' in norm:
+        return 'Démission'
+    if 'deces' in norm or 'décés' in norm:
+        return 'Décès'
+    if 'essai' in norm:
+        return 'Fin période essai'
+    if 'volontaire' in norm:
+        return 'Départ volontaire'
+    if 'retraite' in norm:
+        return 'Retraite'
+    if 'licenciement' in norm:
+        return 'Licenciement'
+    if 'abandon' in norm:
+        return 'Abandon de poste'
+    if 'mutation' in norm:
+        return 'Mutation'
+    if 'fin de contrat' in norm or 'fin contrat' in norm:
+        return 'Fin de contrat'
+    # Motif réel non reconnu : on garde le libellé d'origine plutôt que de
+    # le masquer sous "Autre".
+    return original[:1].upper() + original[1:]
 
 FORMATION_COLUMNS = [
     'n_action', 'domaine', 'type_action', 'thematique', 'date_debut', 'date_fin',
@@ -749,19 +785,19 @@ def generate_data(excel_path=None, output_path=None, formation_path=None, social
                     'matricule': str(mat_int),
                     'nom': nom,
                     'prenom': prenom,
-                    'etablissement': site,
-                    'classification': college,
+                    'site': site,
+                    'college': college,
                     'date': date_str,
                     'fonction': fonction
                 })
-                
+
                 # Compter par site
                 if site:
                     recrutements_par_site[site] = recrutements_par_site.get(site, 0) + 1
-        
+
         # Parser les départs (après dep_header_idx)
         departs_list = []
-        motifs_depart = {'Démission': 0, 'Décès': 0, 'Fin période essai': 0, 'Retraite': 0, 'Autre': 0}
+        motifs_depart = {}
         
         if dep_header_idx is not None:
             for idx in range(dep_header_idx + 1, len(df_mvt_raw)):
@@ -783,8 +819,8 @@ def generate_data(excel_path=None, output_path=None, formation_path=None, social
                 site = str(row[4]) if pd.notna(row[4]) else ''
                 college = str(row[5]) if pd.notna(row[5]) else ''
                 date_dep = row[6]
-                motif_raw = str(row[7]).lower() if pd.notna(row[7]) else ''
-                
+                motif_raw = row[7] if pd.notna(row[7]) else ''
+
                 # Formater la date
                 date_str = ''
                 if pd.notna(date_dep):
@@ -792,27 +828,16 @@ def generate_data(excel_path=None, output_path=None, formation_path=None, social
                         date_str = pd.to_datetime(date_dep).strftime('%Y-%m-%d')
                     except:
                         date_str = str(date_dep)
-                
-                # Normaliser le motif
-                if 'démission' in motif_raw or 'demission' in motif_raw:
-                    motif = 'Démission'
-                elif 'décès' in motif_raw or 'deces' in motif_raw or 'décés' in motif_raw:
-                    motif = 'Décès'
-                elif 'essai' in motif_raw or 'éssai' in motif_raw:
-                    motif = 'Fin période essai'
-                elif 'retraite' in motif_raw:
-                    motif = 'Retraite'
-                else:
-                    motif = 'Autre'
-                
+
+                motif = classify_motif_depart(motif_raw)
                 motifs_depart[motif] = motifs_depart.get(motif, 0) + 1
-                
+
                 departs_list.append({
                     'matricule': str(mat_int),
                     'nom': nom,
                     'prenom': prenom,
-                    'etablissement': site,
-                    'classification': college,
+                    'site': site,
+                    'college': college,
                     'date': date_str,
                     'motif': motif
                 })
