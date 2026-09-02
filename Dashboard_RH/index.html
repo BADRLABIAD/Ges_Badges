@@ -1022,6 +1022,7 @@
                 renderFormation();
                 renderSocialCategoryPage('social');
                 renderSocialCategoryPage('societal');
+                await loadSharedBudgets();
                 renderBudgetPage();
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -2157,9 +2158,34 @@
         // ============================================================
         // BUDGET — suivi consolidé, saisie protégée par mot de passe
         // ============================================================
-        const BUDGET_EDIT_PASSWORD = 'Sonasid2026*';
+        // Les budgets sont partagés entre tous les postes : stockés côté
+        // serveur (data/budgets.json via app.py) plutôt que dans le
+        // localStorage du navigateur (qui serait propre à chaque poste).
+        // Si le backend Flask n'est pas joignable (hébergement statique),
+        // on retombe sur le localStorage pour que la page reste utilisable,
+        // mais dans ce mode les valeurs restent locales au poste.
         const BUDGET_STORAGE_PREFIX = 'dashboardRH_budget_';
+        let sharedBudgets = {};
+        let budgetsBackendAvailable = false;
         let budgetEditMode = false;
+        let pendingBudgetPassword = null;
+
+        async function loadSharedBudgets() {
+            try {
+                const res = await fetch('api/budgets');
+                if (!res.ok) throw new Error('backend indisponible');
+                sharedBudgets = await res.json();
+                budgetsBackendAvailable = true;
+            } catch (e) {
+                budgetsBackendAvailable = false;
+                sharedBudgets = {};
+                Object.keys(localStorage).forEach(k => {
+                    if (k.startsWith(BUDGET_STORAGE_PREFIX)) {
+                        sharedBudgets[k.slice(BUDGET_STORAGE_PREFIX.length)] = parseFloat(localStorage.getItem(k));
+                    }
+                });
+            }
+        }
 
         function getBudgetCategories() {
             const ind = appData.indicateurs || {};
@@ -2195,8 +2221,8 @@
         }
 
         function getBudgetValue(cat) {
-            const stored = localStorage.getItem(BUDGET_STORAGE_PREFIX + cat.key);
-            if (stored !== null && stored !== '') return parseFloat(stored);
+            const shared = sharedBudgets[cat.key];
+            if (shared !== undefined && shared !== null && shared !== '') return parseFloat(shared);
             return cat.seed || null;
         }
 
@@ -2270,10 +2296,9 @@
         function onBudgetEditClick() {
             const password = prompt('Saisissez le mot de passe administrateur pour modifier les budgets :');
             if (password === null) return;
-            if (password !== BUDGET_EDIT_PASSWORD) {
-                alert('Mot de passe incorrect.');
-                return;
-            }
+            // Vérification définitive faite côté serveur à l'enregistrement ;
+            // ce prompt ne fait que déverrouiller les champs côté interface.
+            pendingBudgetPassword = password;
             budgetEditMode = true;
             document.querySelectorAll('[id^="budgetInput_"]').forEach(input => input.disabled = false);
             document.getElementById('budgetEditBtn').style.display = 'none';
@@ -2281,17 +2306,48 @@
             document.getElementById('budgetCancelBtn').style.display = 'inline-flex';
         }
 
-        function saveBudgetValues() {
+        async function saveBudgetValues() {
+            const values = {};
             getBudgetCategories().forEach(cat => {
                 const input = document.getElementById('budgetInput_' + cat.key);
-                if (input.value === '') localStorage.removeItem(BUDGET_STORAGE_PREFIX + cat.key);
-                else localStorage.setItem(BUDGET_STORAGE_PREFIX + cat.key, input.value);
+                values[cat.key] = input.value === '' ? null : input.value;
             });
+
+            if (budgetsBackendAvailable) {
+                try {
+                    const res = await fetch('api/budgets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password: pendingBudgetPassword, budgets: values })
+                    });
+                    const result = await res.json();
+                    if (!res.ok || !result.success) {
+                        alert(result.error || 'Mot de passe incorrect.');
+                        return;
+                    }
+                    sharedBudgets = result.budgets;
+                } catch (e) {
+                    alert("Impossible de contacter le serveur pour enregistrer les budgets. Vérifiez qu'app.py tourne bien.");
+                    return;
+                }
+            } else {
+                // Pas de backend joignable : on garde une sauvegarde locale au
+                // poste pour ne pas perdre la saisie, mais elle ne sera pas
+                // visible sur les autres postes.
+                Object.entries(values).forEach(([key, val]) => {
+                    if (val === null) { localStorage.removeItem(BUDGET_STORAGE_PREFIX + key); delete sharedBudgets[key]; }
+                    else { localStorage.setItem(BUDGET_STORAGE_PREFIX + key, val); sharedBudgets[key] = parseFloat(val); }
+                });
+                alert("Le serveur applicatif (app.py) n'est pas joignable : les budgets sont enregistrés localement sur ce poste uniquement, ils ne seront pas visibles sur les autres postes.");
+            }
+
+            pendingBudgetPassword = null;
             exitBudgetEditMode();
             renderBudgetPage();
         }
 
         function cancelBudgetEdit() {
+            pendingBudgetPassword = null;
             exitBudgetEditMode();
             renderBudgetPage();
         }

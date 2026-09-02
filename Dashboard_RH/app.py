@@ -128,6 +128,54 @@ def status():
     return jsonify(status_info)
 
 # ============================================================================
+# BUDGETS (partagés entre tous les postes, stockés côté serveur)
+# ============================================================================
+BUDGET_FILE = DATA_DIR / 'budgets.json'
+BUDGET_EDIT_PASSWORD = 'Sonasid2026*'
+BUDGET_KEYS = {'masse_salariale', 'fte', 'formation', 'social', 'societal'}
+
+@app.route('/api/budgets')
+def get_budgets():
+    """Lire les budgets alloués (cibles saisies par un administrateur)"""
+    if not BUDGET_FILE.exists():
+        return jsonify({})
+    try:
+        with open(BUDGET_FILE, 'r', encoding='utf-8') as f:
+            return jsonify(json.load(f))
+    except Exception:
+        return jsonify({})
+
+@app.route('/api/budgets', methods=['POST'])
+def save_budgets():
+    """Enregistrer les budgets alloués. Protégé par mot de passe côté serveur
+    (pas seulement côté navigateur) pour que /api/budgets ne soit pas
+    modifiable par n'importe qui connaissant juste l'URL."""
+    payload = request.get_json(silent=True) or {}
+    if payload.get('password') != BUDGET_EDIT_PASSWORD:
+        return jsonify({'success': False, 'error': 'Mot de passe incorrect'}), 403
+
+    values = payload.get('budgets', {})
+    if not isinstance(values, dict):
+        return jsonify({'success': False, 'error': 'Format invalide'}), 400
+
+    cleaned = {}
+    for key, value in values.items():
+        if key not in BUDGET_KEYS:
+            continue
+        if value is None or value == '':
+            continue
+        try:
+            cleaned[key] = float(value)
+        except (TypeError, ValueError):
+            continue
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with open(BUDGET_FILE, 'w', encoding='utf-8') as f:
+        json.dump(cleaned, f, ensure_ascii=False, indent=2)
+
+    return jsonify({'success': True, 'budgets': cleaned})
+
+# ============================================================================
 # GÉNÉRATION DES DONNÉES
 # ============================================================================
 # La logique de calcul (EFFECTIF/MS/MOUVEMENT/FORMATION) est centralisée dans

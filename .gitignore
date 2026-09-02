@@ -6,3 +6,6 @@ Dashboard_RH/*.pfx
 # Python
 __pycache__/
 *.pyc
+
+# Budgets saisis par l'administrateur (état d'instance, pas du code)
+Dashboard_RH/data/budgets.json

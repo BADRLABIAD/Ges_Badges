@@ -188,8 +188,13 @@ séparés par des virgules.
 
 Les budgets *alloués* (par opposition aux budgets *consommés*, calculés
 depuis les fichiers Excel) se saisissent tous depuis la page **Budget**,
-protégée par un mot de passe administrateur, et restent stockés dans le
-navigateur (pas de rechargement Excel nécessaire pour les ajuster).
+protégée par un mot de passe administrateur (`Sonasid2026*`), et sont
+stockés côté serveur dans `data/budgets.json` (via les routes `/api/budgets`
+d'`app.py`) — visibles par tous les postes qui ouvrent le dashboard, pas
+seulement celui qui les a saisis. Cela nécessite que le serveur Flask
+(`app.py`) soit lancé ; en hébergement statique pur (Apache/Nginx sans
+Flask), la page retombe automatiquement sur un stockage local au
+navigateur, avec un message prévenant que la valeur ne sera pas partagée.
 
 ---
 
