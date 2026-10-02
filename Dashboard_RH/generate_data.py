@@ -69,14 +69,63 @@ FORMATION_COLUMNS = [
     'eval_froid', 'resultat'
 ]
 
+# Mots-clés pour localiser chaque colonne par son en-tête plutôt que par sa
+# position : un export peut ajouter une colonne (ex. "Genre", "Taux de
+# Présence") sans prévenir, ce qui décale tout le reste si on se fie à
+# l'ordre. L'ordre de cette liste compte pour lever les ambiguïtés entre
+# en-têtes qui se chevauchent (ex. "Type d'action" contient "action" ; on
+# retire donc "type_action" du lot AVANT de chercher "n_action").
+FORMATION_COLUMN_KEYWORDS = [
+    ('type_action', ['type']),
+    ('n_action', ['n° action', 'numero action', 'action']),
+    ('domaine', ['domaine']),
+    ('thematique', ['them']),
+    ('date_debut', ['début', 'debut']),
+    ('date_fin', ['fin']),
+    ('nb_jours', ['jour']),
+    ('nb_heures', ['heure']),
+    ('matricule', ['matricule']),
+    ('prenom', ['prénom', 'prenom']),
+    ('nom', ['nom']),
+    ('classification', ['classification']),
+    ('site', ['site']),
+    ('departement', ['département', 'departement']),
+    ('statut', ['statut']),
+    ('cabinet', ['cabinet']),
+    ('formateur_interne', ['non formateur']),
+    ('cout_formation', ['coût formation', 'cout formation']),
+    ('cout_logistique', ['logistique']),
+    ('eval_chaud', ['chaud']),
+    ('eval_formateur', ['évaluation formateur', 'evaluation formateur']),
+    ('taux_satisfaction', ['satisfaction']),
+    ('eval_froid', ['froid']),
+    ('resultat', ['résultat', 'resultat']),
+]
+FORMATION_REQUIRED_COLUMNS = [
+    'n_action', 'domaine', 'thematique', 'date_debut', 'nb_heures',
+    'nom', 'prenom', 'cabinet', 'cout_formation', 'cout_logistique'
+]
+
 def process_formation(formation_path, fte_total=0, ms_ytd=0):
     """Traiter les données du volet Formation (fichier TB/FORMATION.xlsx)"""
     formation_path = Path(formation_path)
     if not formation_path.exists():
         return None
 
-    df = pd.read_excel(formation_path, sheet_name=0)
-    df.columns = FORMATION_COLUMNS[:len(df.columns)]
+    raw = pd.read_excel(formation_path, sheet_name=0)
+    available = list(raw.columns)
+    found = {}
+    for role, keywords in FORMATION_COLUMN_KEYWORDS:
+        found[role] = pick_column(available, keywords)
+
+    missing = [role for role in FORMATION_REQUIRED_COLUMNS if found.get(role) is None]
+    if missing:
+        raise ValueError(
+            f"Colonnes introuvables dans {formation_path.name}: {missing} "
+            f"(en-têtes lus : {list(raw.columns)})"
+        )
+
+    df = pd.DataFrame({role: (raw[col] if col is not None else None) for role, col in found.items()})
 
     # Les colonnes d'identité de l'action (domaine, thématique, cabinet, dates)
     # ne sont renseignées que sur la 1ère ligne de chaque formation (cellules
@@ -418,11 +467,14 @@ def classify_social_action(type_action_raw):
 
 def pick_column(raw_columns, keywords):
     """Trouve puis retire de la liste la première colonne dont l'en-tête
-    contient un des mots-clés (recherche insensible à la casse). Retourne
-    None si aucune colonne ne correspond."""
+    contient un des mots-clés (recherche insensible à la casse ET aux
+    accents, les en-têtes variant d'un export à l'autre : 'Thèmatique' avec
+    un accent grave, 'Non Formateur' vs 'Formateur', etc.). Retourne None si
+    aucune colonne ne correspond."""
+    norm_keywords = [strip_accents(kw).lower() for kw in keywords]
     for col in list(raw_columns):
-        name = str(col).strip().lower()
-        if any(kw in name for kw in keywords):
+        name = strip_accents(str(col).strip()).lower()
+        if any(kw in name for kw in norm_keywords):
             raw_columns.remove(col)
             return col
     return None
